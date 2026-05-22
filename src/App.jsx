@@ -447,27 +447,8 @@ export default function Portfolio() {
           </div>
         </h1>
 
-        <div className="hero-cue absolute bottom-16 flex flex-col items-center gap-3">
-          <span className="text-[10px] tracking-[0.4em] uppercase text-zinc-600">scroll</span>
-          <div className="w-px h-10 scroll-line" />
-        </div>
       </section>
 
-      {/* ═══ MARQUEE ═══ */}
-      <div className="border-y border-white/[0.06] overflow-hidden py-6">
-        <div className="marquee-track flex whitespace-nowrap">
-          {[0, 1].map((i) => (
-            <span
-              key={i}
-              className="text-[4vw] md:text-[2.5vw] font-display tracking-wider text-white/[0.07] mx-4 shrink-0"
-            >
-              PHYSICS DROPOUT — HR STRATEGIST — SELF-TAUGHT CODER — AI AGENT BUILDER
-              &nbsp;—&nbsp; PHYSICS DROPOUT — HR STRATEGIST — SELF-TAUGHT CODER — AI
-              AGENT BUILDER &nbsp;—&nbsp;{' '}
-            </span>
-          ))}
-        </div>
-      </div>
 
 
       {/* ═══ BUILDS ═══ */}
