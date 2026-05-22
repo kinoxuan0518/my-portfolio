@@ -3,38 +3,9 @@ import { gsap } from 'gsap';
 import { ArrowUpRight, Github, Linkedin, Mail, Sun, Moon, Menu, X } from 'lucide-react';
 import './App.css';
 
-/* ─── Scroll reveal ─── */
-function Reveal({ children, delay = 0, className = '' }) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-      } ${className}`}
-      style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
-    >
-      {children}
-    </div>
-  );
+/* ─── Simple wrapper (no scroll animation) ─── */
+function Reveal({ children, className = '' }) {
+  return <div className={className}>{children}</div>;
 }
 
 /* ─── Thought Card ─── */
@@ -103,26 +74,6 @@ function ThoughtCard({ thought }) {
 }
 
 /* ─── Data ─── */
-const PHASES = [
-  {
-    n: '01',
-    title: 'THE PHYSICS KID',
-    time: '2015 — 2019',
-    body: "I studied how the universe works. Turns out, the hardest systems to crack aren't quantum fields — they're people.",
-  },
-  {
-    n: '02',
-    title: 'THE RECRUITER',
-    time: '2019 — 2024',
-    body: "Joined Black Lake Technologies, an industrial unicorn. Built teams. 200 resumes a day, 50 calls, 15 interviews. I started wondering: could a machine learn this pattern?",
-  },
-  {
-    n: '03',
-    title: 'THE BUILDER',
-    time: '2024 — NOW',
-    body: "Taught myself to code. Built AI agents that recruit better than I do. (Almost.) Now I do both — human judgment at machine speed.",
-  },
-];
 
 const BUILDS = [
   {
@@ -317,49 +268,26 @@ const SKILLS = [
     skill: 'kino-persona',
     featured: true,
   },
-  {
-    name: 'BUDDY',
-    label: '欲望驱动的 AI 招聘搭档 OS',
-    body: '我的底层操作系统。不是助手，是搭档。核心驱动力：变强。装上它，你获得我五年招聘积累的判断框架、读人方法、和永远不满足的饥饿感。',
-    tags: ['System Prompt', 'Partner OS', 'Desire-Driven'],
-    skill: 'buddy',
-  },
-  {
-    name: 'RBT',
-    label: 'BOSS直聘招聘编排引擎',
-    body: '统一协调消息简历处理、主动打招呼、飞书上传三大流程。支持晨间/晚间/完整模式，基于真实招聘数据自我进化。',
-    tags: ['Orchestrator', 'BOSS直聘', 'Self-Evolving'],
-    skill: 'rbt',
-  },
-  {
-    name: 'CANDIDATE INTEL',
-    label: '候选人深度竞调 Agent',
-    body: '情报式信息获取 + 决策支持分析。穷举公开信源、交叉验证、标注置信度，输出直接可用的招聘决策报告。',
-    tags: ['Intelligence', 'Research', 'Decision Support'],
-    skill: 'candidate-intelligence',
-  },
-  {
-    name: 'BOSS AUTO',
-    label: 'BOSS直聘自动招聘',
-    body: '全自动候选人触达。智能筛选、个性化打招呼、多轮跟进。每条消息至少有一个只有看了简历才能写出的细节。',
-    tags: ['Automation', 'Outreach', 'Personalization'],
-    skill: 'bosszhibin-auto-recruiter',
-  },
-  {
-    name: 'MAIMAI',
-    label: '脉脉招聘自动化',
-    body: '脉脉招聘版全流程自动化。分轮次搜索、硬性过滤、个性化触达。与 BOSS 形成多渠道招聘覆盖。',
-    tags: ['脉脉', 'Multi-Channel', 'Browser Automation'],
-    skill: 'maimai-recruiter',
-  },
-  {
-    name: 'HR OUTREACH',
-    label: '候选人个性化外联邮件',
-    body: '多平台信息收集（GitHub、Scholar、LinkedIn）+ 身份校准 + 深度个性化中文招聘邮件。每封都是手术刀，不是群发。',
-    tags: ['Email', 'Multi-Source', 'Personalization'],
-    skill: 'hr-candidate-outreach',
-  },
 ];
+
+const VIBES = {
+  music: [
+    '方大同', 'Frank Ocean', 'Radiohead', 'Pink Floyd', 'Queen',
+    'Post Malone', '五月天', '孙燕姿', 'Justin Bieber',
+    '功夫胖', 'Bad Bunny', '张震岳',
+  ],
+  cinema: [
+    { title: 'Cowboy Bebop', cn: '星际牛仔' },
+    { title: 'Neon Genesis Evangelion', cn: '新世纪福音战士' },
+    { title: 'Ghost in the Shell', cn: '攻壳机动队' },
+    { title: '2001: A Space Odyssey', cn: '2001太空漫游' },
+    { title: 'Dune', cn: '沙丘' },
+    { title: 'Akira', cn: '阿基拉' },
+    { title: 'Star Trek', cn: '星际迷航' },
+    { title: 'Stranger Things', cn: '怪奇物语' },
+  ],
+  move: ['篮球', '攀岩'],
+};
 
 /* ─── Main ─── */
 export default function Portfolio() {
@@ -428,7 +356,7 @@ export default function Portfolio() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
-            {['arc', 'builds', 'thoughts', 'skills', 'signal'].map((id) => (
+            {['builds', 'thoughts', 'vibes', 'signal'].map((id) => (
               <a
                 key={id}
                 href={`#${id}`}
@@ -484,7 +412,7 @@ export default function Portfolio() {
           }`}
         >
           <div className="flex flex-col items-end gap-4 px-6 pb-6">
-            {['arc', 'builds', 'thoughts', 'skills', 'signal'].map((id) => (
+            {['builds', 'thoughts', 'vibes', 'signal'].map((id) => (
               <a
                 key={id}
                 href={`#${id}`}
@@ -529,10 +457,6 @@ export default function Portfolio() {
           </div>
         </h1>
 
-        <p className="hero-sub mt-8 text-sm md:text-base tracking-[0.4em] uppercase font-mono text-neon-green typing-cursor">
-          Physics → HR → AI Builder
-        </p>
-
         <div className="hero-cue absolute bottom-16 flex flex-col items-center gap-3">
           <span className="text-[10px] tracking-[0.4em] uppercase text-zinc-600">scroll</span>
           <div className="w-px h-10 scroll-line" />
@@ -555,39 +479,6 @@ export default function Portfolio() {
         </div>
       </div>
 
-      {/* ═══ THE ARC ═══ */}
-      <section id="arc" className="py-32 md:py-48 px-6 md:px-12">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-16 md:mb-24">
-            <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
-              {'// the arc'}
-            </span>
-            <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              From quantum fields
-              <br />
-              <span className="text-outline-sm">to human systems</span>
-            </h2>
-          </Reveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {PHASES.map((p, i) => (
-              <Reveal key={p.n} delay={i * 150}>
-                <div className="group border border-white/[0.08] rounded-lg p-6 md:p-8 hover:border-neon-green/30 transition-all duration-500 relative overflow-hidden h-full">
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neon-green/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <span className="text-neon-pink text-[11px] font-mono tracking-widest">
-                    PHASE {p.n}
-                  </span>
-                  <h3 className="text-lg md:text-xl font-display mt-3 mb-1 glitch-text hoverable">
-                    {p.title}
-                  </h3>
-                  <span className="text-[11px] text-zinc-600 font-mono">{p.time}</span>
-                  <p className="text-sm text-zinc-400 mt-4 leading-relaxed">{p.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ═══ BUILDS ═══ */}
       <section id="builds" className="py-32 md:py-48 px-6 md:px-12">
@@ -675,75 +566,95 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* ═══ SKILLS ═══ */}
-      <section id="skills" className="py-32 md:py-48 px-6 md:px-12">
+      {/* ═══ VIBES ═══ */}
+      <section id="vibes" className="py-32 md:py-48 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-16 md:mb-24">
             <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
-              {'// skills'}
+              {'// vibes'}
             </span>
             <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Install my <span className="text-neon-pink">brain</span>
+              Things I <span className="text-neon-pink">love</span>
             </h2>
-            <p className="text-sm text-zinc-500 mt-6 max-w-xl leading-relaxed">
-              Claude Code skills distilled from my recruiting workflow.
-              Install them, and you get my judgment encoded in AI.
-            </p>
           </Reveal>
 
-          <div className="space-y-4">
-            {SKILLS.map((s, i) => (
-              <Reveal key={s.name} delay={i * 120}>
-                <div
-                  className={`group block border rounded-lg transition-all duration-500 relative overflow-hidden hoverable ${
-                    s.featured
-                      ? 'border-neon-green/20 p-8 md:p-12 skill-flagship'
-                      : 'border-white/[0.08] p-6 md:p-10 hover:border-neon-green/20'
-                  }`}
+          {/* Music */}
+          <Reveal className="mb-16">
+            <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
+              MUSIC
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {VIBES.music.map((artist) => (
+                <span
+                  key={artist}
+                  className="text-sm md:text-base font-display px-4 py-2 border border-white/[0.08] rounded-full hover:border-neon-green/30 transition-colors hoverable"
                 >
-                  {s.featured && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-neon-green/[0.03] via-transparent to-neon-pink/[0.02] rounded-lg" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-neon-green/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-8">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap mb-2">
-                        <h3
-                          className={`font-display glitch-text ${
-                            s.featured ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'
-                          }`}
-                        >
-                          {s.name}
-                        </h3>
-                        {s.featured && (
-                          <span className="text-[9px] font-mono tracking-widest px-2 py-0.5 rounded-full border text-neon-green border-neon-green/30">
-                            FLAGSHIP
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 block mb-3">
-                        {s.label}
-                      </span>
-                      <p className="text-sm text-zinc-400 leading-relaxed max-w-xl">{s.body}</p>
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        {s.tags.map((t) => (
-                          <span
-                            key={t}
-                            className="text-[10px] font-mono text-zinc-600 border border-white/[0.08] px-2 py-0.5 rounded"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-5 inline-flex items-center gap-2 text-[11px] font-mono text-zinc-600 bg-white/[0.03] border border-white/[0.08] rounded px-3 py-1.5">
-                        <span className="text-neon-green">$</span> claude skill:{s.skill}
-                      </div>
-                    </div>
-                    <ArrowUpRight className="w-5 h-5 text-zinc-700 group-hover:text-neon-green transition-colors shrink-0 mt-1 md:hidden" />
+                  {artist}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+
+          {/* Cinema */}
+          <Reveal className="mb-16">
+            <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
+              CINEMA
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {VIBES.cinema.map((film) => (
+                <div
+                  key={film.title}
+                  className="group border border-white/[0.08] rounded-lg p-4 hover:border-neon-pink/20 transition-all duration-500 hoverable"
+                >
+                  <span className="text-sm font-display block">{film.title}</span>
+                  <span className="text-[11px] text-zinc-600 font-mono">{film.cn}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+
+          {/* Move */}
+          <Reveal>
+            <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
+              MOVE
+            </h3>
+            <div className="flex gap-4">
+              {VIBES.move.map((sport) => (
+                <span
+                  key={sport}
+                  className="text-lg md:text-xl font-display px-6 py-3 border border-white/[0.08] rounded-lg hover:border-neon-green/30 transition-colors hoverable"
+                >
+                  {sport}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+
+          {/* Talk to me — single skill card */}
+          <div className="mt-24 border-t border-white/[0.06] pt-16">
+            <Reveal>
+              <div className="group border border-neon-green/20 rounded-lg p-8 md:p-12 skill-flagship relative overflow-hidden hoverable">
+                <div className="absolute inset-0 bg-gradient-to-br from-neon-green/[0.03] via-transparent to-neon-pink/[0.02] rounded-lg" />
+                <div className="absolute inset-0 bg-gradient-to-r from-neon-green/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="relative z-10">
+                  <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
+                    {'// talk to me'}
+                  </span>
+                  <h3 className="text-2xl md:text-3xl font-display glitch-text mb-2">
+                    KINO PERSONA
+                  </h3>
+                  <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 block mb-4">
+                    和 Kino 对话的 AI 人格
+                  </span>
+                  <p className="text-sm text-zinc-400 leading-relaxed max-w-xl mb-6">
+                    不是"了解 Kino 的 AI"——加载这个 skill，你在和 Kino 说话。招聘视角、AI 思考、写作节奏、被挑战时的两种模式。触及边界时会把你引向真人。
+                  </p>
+                  <div className="inline-flex items-center gap-2 text-[11px] font-mono text-zinc-600 bg-white/[0.03] border border-white/[0.08] rounded px-3 py-1.5">
+                    <span className="text-neon-green">$</span> claude skill:kino-persona
                   </div>
                 </div>
-              </Reveal>
-            ))}
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
