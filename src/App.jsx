@@ -341,9 +341,7 @@ export default function Portfolio() {
 
       {/* ─── NAV ─── */}
       <nav className="fixed top-0 inset-x-0 z-50 mix-blend-difference">
-        <div className="flex justify-between items-center px-6 md:px-12 py-6">
-          <span className="text-sm font-bold tracking-[0.3em] text-white">KX</span>
-
+        <div className="flex justify-end items-center px-6 md:px-12 py-6">
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
             {['builds', 'thoughts', 'vibes', 'signal'].map((id) => (
