@@ -24,9 +24,6 @@ function ThoughtCard({ thought }) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h3 className="text-xl md:text-2xl font-display glitch-text">{thought.title}</h3>
-            <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 mt-1 block">
-              {thought.en}
-            </span>
           </div>
           <span
             className={`text-neon-green font-mono text-lg shrink-0 transition-transform duration-300 ${
@@ -78,24 +75,24 @@ function ThoughtCard({ thought }) {
 const BUILDS = [
   {
     name: 'HIRECLAW',
-    label: 'Multi-LLM Recruiting Agent',
-    body: 'Autonomous AI recruiter. Parses resumes, matches candidates across dimensions, generates personalized outreach. The recruiter that never sleeps.',
-    stack: ['Claude', 'GPT-4', 'Python', 'Agent Architecture'],
+    label: '多模型招聘 Agent',
+    body: '自主运行的 AI 招聘员。解析简历、多维度匹配候选人、生成个性化触达。一个永远不下班的招聘搭档。',
+    stack: ['Claude', 'GPT-4', 'Python', 'Agent'],
     href: 'https://github.com/kinoxuan0518/hireclaw',
     live: true,
   },
   {
     name: 'BOSSZHIBIN',
-    label: 'BOSS直聘 Automation Suite',
-    body: "Full-stack automation for China's largest recruiting platform. Chrome extension + message handler + intelligent cache. Because greeting 200 candidates manually is insane.",
+    label: 'BOSS直聘自动化套件',
+    body: '全栈招聘自动化。Chrome 插件 + 消息处理 + 智能缓存。因为每天手动打 200 个招呼是不合理的。',
     stack: ['Chrome Extension', 'Node.js', 'Puppeteer', 'LLM'],
     href: 'https://github.com/kinoxuan0518',
     live: true,
   },
   {
     name: 'MAIMAI RECRUITER',
-    label: '脉脉 Outreach Engine',
-    body: 'Automated professional networking outreach. Same philosophy — machines handle the repetitive work, humans do the human work.',
+    label: '脉脉自动触达引擎',
+    body: '职业社交平台的自动化外联。同一个信念——机器做重复的活，人做人该做的事。',
     stack: ['Automation', 'NLP', 'Browser APIs'],
     href: 'https://github.com/kinoxuan0518/maimai-recruiter',
     live: false,
@@ -344,13 +341,13 @@ export default function Portfolio() {
         <div className="flex justify-end items-center px-6 md:px-12 py-6">
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
-            {['builds', 'thoughts', 'vibes', 'signal'].map((id) => (
+            {[['builds','作品'],['thoughts','想法'],['vibes','喜欢'],['signal','联系']].map(([id,label]) => (
               <a
                 key={id}
                 href={`#${id}`}
-                className="nav-link text-[11px] tracking-[0.3em] uppercase text-white hoverable"
+                className="nav-link text-[11px] tracking-[0.3em] text-white hoverable"
               >
-                {id}
+                {label}
               </a>
             ))}
             <button
@@ -400,14 +397,14 @@ export default function Portfolio() {
           }`}
         >
           <div className="flex flex-col items-end gap-4 px-6 pb-6">
-            {['builds', 'thoughts', 'vibes', 'signal'].map((id) => (
+            {[['builds','作品'],['thoughts','想法'],['vibes','喜欢'],['signal','联系']].map(([id,label]) => (
               <a
                 key={id}
                 href={`#${id}`}
                 onClick={() => setMenuOpen(false)}
-                className="nav-link text-[11px] tracking-[0.3em] uppercase text-white hoverable"
+                className="nav-link text-[12px] tracking-[0.2em] text-white hoverable"
               >
-                {id}
+                {label}
               </a>
             ))}
           </div>
@@ -453,11 +450,8 @@ export default function Portfolio() {
       <section id="builds" className="py-32 md:py-48 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-16 md:mb-24">
-            <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
-              {'// selected builds'}
-            </span>
             <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Things I've <span className="text-neon-pink">shipped</span>
+              造过的<span className="text-neon-pink">东西</span>
             </h2>
           </Reveal>
 
@@ -484,7 +478,7 @@ export default function Portfolio() {
                               : 'text-neon-pink border-neon-pink/30'
                           }`}
                         >
-                          {b.live ? 'ACTIVE' : 'BUILDING'}
+                          {b.live ? '在跑' : '在造'}
                         </span>
                       </div>
                       <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 block mb-3">
@@ -515,13 +509,8 @@ export default function Portfolio() {
       <section id="thoughts" className="py-32 md:py-48 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-16 md:mb-24">
-            <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
-              {'// thoughts'}
-            </span>
             <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Questions that
-              <br />
-              <span className="text-outline-sm">won't shut up</span>
+              关不掉的<span className="text-outline-sm">问题</span>
             </h2>
           </Reveal>
 
@@ -539,18 +528,15 @@ export default function Portfolio() {
       <section id="vibes" className="py-32 md:py-48 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-16 md:mb-24">
-            <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
-              {'// vibes'}
-            </span>
             <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Things I <span className="text-neon-pink">love</span>
+              喜欢的<span className="text-neon-pink">东西</span>
             </h2>
           </Reveal>
 
           {/* Music */}
           <Reveal className="mb-16">
             <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
-              MUSIC
+              音乐
             </h3>
             <div className="flex flex-wrap gap-3">
               {VIBES.music.map((artist) => (
@@ -567,7 +553,7 @@ export default function Portfolio() {
           {/* Cinema */}
           <Reveal className="mb-16">
             <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
-              CINEMA
+              影视
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {VIBES.cinema.map((film) => (
@@ -585,7 +571,7 @@ export default function Portfolio() {
           {/* Move */}
           <Reveal>
             <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
-              MOVE
+              运动
             </h3>
             <div className="flex gap-4">
               {VIBES.move.map((sport) => (
@@ -626,25 +612,20 @@ export default function Portfolio() {
       <section id="signal" className="py-32 md:py-48 px-6 md:px-12">
         <div className="max-w-4xl mx-auto text-center">
           <Reveal>
-            <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-8">
-              {'// the signal'}
-            </span>
-          </Reveal>
-          <Reveal delay={100}>
             <blockquote className="text-2xl md:text-5xl font-display leading-snug mb-16">
-              The future of recruiting isn't better job boards. It's{' '}
-              <span className="text-neon-green">AI agents</span> that understand what makes
-              someone <span className="text-neon-pink">right</span>.
+              招聘的未来不是更好的招聘网站，而是能判断一个人{' '}
+              <span className="text-neon-green">对不对</span>的{' '}
+              <span className="text-neon-pink">AI</span>。
             </blockquote>
           </Reveal>
-          <Reveal delay={200}>
+          <Reveal>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a
                 href="mailto:kinoxuanzl@gmail.com"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-neon-green text-obsidian font-bold text-sm tracking-wider rounded-full hover:shadow-[0_0_30px_rgba(57,255,20,0.3)] transition-all hoverable"
               >
                 <Mail className="w-4 h-4" />
-                LET'S TALK
+                聊聊
               </a>
               <a
                 href="https://github.com/kinoxuan0518"
@@ -653,7 +634,7 @@ export default function Portfolio() {
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/[0.15] text-sm tracking-wider rounded-full hover:border-neon-green/40 transition-all hoverable"
               >
                 <Github className="w-4 h-4" />
-                GITHUB
+                GitHub
               </a>
               <a
                 href="https://www.linkedin.com/in/kino-xuan-703a37124/"
@@ -662,7 +643,7 @@ export default function Portfolio() {
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/[0.15] text-sm tracking-wider rounded-full hover:border-neon-pink/40 transition-all hoverable"
               >
                 <Linkedin className="w-4 h-4" />
-                LINKEDIN
+                LinkedIn
               </a>
             </div>
           </Reveal>
@@ -674,7 +655,7 @@ export default function Portfolio() {
           © 2026 KINO XUAN
         </p>
         <p className="text-[10px] text-zinc-700 font-mono tracking-wider mt-1">
-          BUILT WITH ATTITUDE & AI
+          态度 + AI
         </p>
       </footer>
     </div>
