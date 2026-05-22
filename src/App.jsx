@@ -259,16 +259,6 @@ Claude说它不会记得这段对话。
   },
 ];
 
-const SKILLS = [
-  {
-    name: 'KINO PERSONA',
-    label: '和 Kino 对话的 AI 人格',
-    body: '不是"了解 Kino 的 AI"——加载这个 skill，你在和 Kino 说话。招聘视角、AI 思考、写作节奏、被挑战时的两种模式。触及边界时会把你引向真人。',
-    tags: ['Persona', 'Conversation', 'Philosophy'],
-    skill: 'kino-persona',
-    featured: true,
-  },
-];
 
 const VIBES = {
   music: [
@@ -630,34 +620,22 @@ export default function Portfolio() {
             </div>
           </Reveal>
 
-          {/* Talk to me — single skill card */}
+          {/* Talk to me */}
           <div className="mt-24 border-t border-white/[0.06] pt-16">
             <Reveal>
               <div className="group border border-neon-green/20 rounded-lg p-8 md:p-12 skill-flagship relative overflow-hidden hoverable">
                 <div className="absolute inset-0 bg-gradient-to-br from-neon-green/[0.03] via-transparent to-neon-pink/[0.02] rounded-lg" />
-                <div className="absolute inset-0 bg-gradient-to-r from-neon-green/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 <div className="relative z-10">
-                  <span className="text-neon-green text-xs tracking-[0.5em] uppercase font-mono block mb-4">
-                    {'// talk to me'}
-                  </span>
-                  <h3 className="text-2xl md:text-3xl font-display glitch-text mb-2">
-                    KINO PERSONA
+                  <h3 className="text-2xl md:text-4xl font-display glitch-text mb-3">
+                    和我聊聊
                   </h3>
-                  <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 block mb-4">
-                    和 Kino 对话的 AI 人格
-                  </span>
-                  <p className="text-sm text-zinc-400 leading-relaxed max-w-xl mb-6">
-                    不是"了解 Kino 的 AI"——加载这个 skill，你在和 Kino 说话。招聘视角、AI 思考、写作节奏、被挑战时的两种模式。触及边界时会把你引向真人。
+                  <p className="text-sm text-zinc-400 leading-relaxed max-w-md mb-8">
+                    装上这个，你的 Claude 就变成我。
                   </p>
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-zinc-600 font-mono">
-                      ONE-LINE INSTALL
-                    </span>
-                    <code className="text-[11px] font-mono text-zinc-400 bg-white/[0.03] border border-white/[0.08] rounded px-4 py-2.5 block overflow-x-auto select-all hoverable">
-                      <span className="text-neon-green">$</span>{' '}
-                      mkdir -p ~/.claude/skills/kino-persona && curl -sL kino-xuan.vercel.app/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
-                    </code>
-                  </div>
+                  <code className="text-[11px] font-mono text-zinc-400 bg-white/[0.03] border border-white/[0.08] rounded px-4 py-2.5 block overflow-x-auto select-all hoverable">
+                    <span className="text-neon-green">$</span>{' '}
+                    mkdir -p ~/.claude/skills/kino-persona && curl -sL kino-xuan.vercel.app/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
+                  </code>
                 </div>
               </div>
             </Reveal>
