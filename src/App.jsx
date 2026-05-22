@@ -348,9 +348,9 @@ export default function Portfolio() {
               <a
                 key={id}
                 href={`#${id}`}
-                className="nav-link text-[11px] tracking-[0.3em] text-white hoverable"
+                className="nav-link text-[11px] tracking-[0.3em] uppercase text-white hoverable"
               >
-                {label}
+                {id}
               </a>
             ))}
             <button
