@@ -649,8 +649,14 @@ export default function Portfolio() {
                   <p className="text-sm text-zinc-400 leading-relaxed max-w-xl mb-6">
                     不是"了解 Kino 的 AI"——加载这个 skill，你在和 Kino 说话。招聘视角、AI 思考、写作节奏、被挑战时的两种模式。触及边界时会把你引向真人。
                   </p>
-                  <div className="inline-flex items-center gap-2 text-[11px] font-mono text-zinc-600 bg-white/[0.03] border border-white/[0.08] rounded px-3 py-1.5">
-                    <span className="text-neon-green">$</span> claude skill:kino-persona
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-zinc-600 font-mono">
+                      ONE-LINE INSTALL
+                    </span>
+                    <code className="text-[11px] font-mono text-zinc-400 bg-white/[0.03] border border-white/[0.08] rounded px-4 py-2.5 block overflow-x-auto select-all hoverable">
+                      <span className="text-neon-green">$</span>{' '}
+                      mkdir -p ~/.claude/skills/kino-persona && curl -sL kino-xuan.vercel.app/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
+                    </code>
                   </div>
                 </div>
               </div>
