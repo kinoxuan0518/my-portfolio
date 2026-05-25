@@ -3,9 +3,38 @@ import { gsap } from 'gsap';
 import { ArrowUpRight, Github, Linkedin, Mail, Sun, Moon, Menu, X } from 'lucide-react';
 import './App.css';
 
-/* ─── Simple wrapper (no scroll animation) ─── */
-function Reveal({ children, className = '' }) {
-  return <div className={className}>{children}</div>;
+/* ─── Scroll reveal (gentle fade-up) ─── */
+function Reveal({ children, delay = 0, className = '' }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+      } ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
 }
 
 /* ─── Thought Card ─── */
@@ -542,10 +571,11 @@ export default function Portfolio() {
               MUSIC
             </h3>
             <div className="flex flex-wrap gap-3">
-              {VIBES.music.map((artist) => (
+              {VIBES.music.map((artist, i) => (
                 <span
                   key={artist}
-                  className="text-sm md:text-base font-display px-4 py-2 border border-white/[0.08] rounded-full hover:border-neon-green/30 transition-colors hoverable"
+                  className="stagger-item text-sm md:text-base font-display px-4 py-2 border border-white/[0.08] rounded-full hover:border-neon-green/30 transition-colors hoverable"
+                  style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {artist}
                 </span>
@@ -559,10 +589,11 @@ export default function Portfolio() {
               CINEMA
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {VIBES.cinema.map((film) => (
+              {VIBES.cinema.map((film, i) => (
                 <div
                   key={film.title}
-                  className="group border border-white/[0.08] rounded-lg p-4 hover:border-neon-pink/20 transition-all duration-500 hoverable"
+                  className="stagger-item group border border-white/[0.08] rounded-lg p-4 hover:border-neon-pink/20 transition-all duration-500 hoverable"
+                  style={{ animationDelay: `${i * 80}ms` }}
                 >
                   <span className="text-sm font-display block">{film.title}</span>
                   <span className="text-[11px] text-zinc-600 font-mono">{film.cn}</span>
