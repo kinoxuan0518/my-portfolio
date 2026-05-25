@@ -602,7 +602,7 @@ export default function Portfolio() {
                   </p>
                   <code className="text-[11px] font-mono text-zinc-400 bg-white/[0.03] border border-white/[0.08] rounded px-4 py-2.5 block overflow-x-auto select-all hoverable">
                     <span className="text-neon-green">$</span>{' '}
-                    mkdir -p ~/.claude/skills/kino-persona && curl -sL kino-xuan.vercel.app/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
+                    mkdir -p ~/.claude/skills/kino-persona && curl -sL https://raw.githubusercontent.com/kinoxuan0518/my-portfolio/main/public/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
                   </code>
                 </div>
               </div>
