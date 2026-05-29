@@ -7,15 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        obsidian: 'rgb(var(--c-bg) / <alpha-value>)',
-        'neon-green': 'rgb(var(--c-accent-1) / <alpha-value>)',
-        'neon-pink': 'rgb(var(--c-accent-2) / <alpha-value>)',
-        'vintage-white': 'rgb(var(--c-text) / <alpha-value>)',
+        paper: 'rgb(var(--c-bg) / <alpha-value>)',
+        panel: 'rgb(var(--c-panel) / <alpha-value>)',
+        ink: 'rgb(var(--c-text) / <alpha-value>)',
+        'ink-2': 'rgb(var(--c-text-2) / <alpha-value>)',
+        'ink-soft': 'rgb(var(--c-muted-1) / <alpha-value>)',
+        'ink-faint': 'rgb(var(--c-muted-2) / <alpha-value>)',
+        'ink-ghost': 'rgb(var(--c-muted-3) / <alpha-value>)',
+        seal: 'rgb(var(--c-accent) / <alpha-value>)',
+        gold: 'rgb(var(--c-accent-2) / <alpha-value>)',
       },
       fontFamily: {
-        display: ['Anton', 'Impact', 'sans-serif'],
+        display: ['Fraunces', '"Playfair Display"', '"Noto Serif SC"', 'Georgia', 'serif'],
+        serif: ['Newsreader', '"Noto Serif SC"', '"Songti SC"', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['"Playfair Display"', '"Noto Serif SC"', '"Songti SC"', 'Georgia', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
     },
   },

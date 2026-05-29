@@ -1,109 +1,127 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, Fragment } from 'react';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowUpRight, Github, Linkedin, Mail, Sun, Moon, Menu, X } from 'lucide-react';
 import './App.css';
 
-/* ─── Scroll reveal (gentle fade-up) ─── */
-function Reveal({ children, delay = 0, className = '' }) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
+gsap.registerPlugin(ScrollTrigger);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
+/* ─── Wave Text: ink letters lift & warm toward the cursor ─── */
+function WaveText({ text, className = '' }) {
+  const charsRef = useRef([]);
+  const rafRef = useRef(null);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+  const activeRef = useRef(false);
+
+  const RADIUS = 140;
+  const STRENGTH = -14;
+  const SCALE_BOOST = 0.05;
+
+  const animate = useCallback(() => {
+    if (activeRef.current) {
+      const chars = charsRef.current;
+      const { x: mx, y: my } = mouseRef.current;
+      for (let i = 0; i < chars.length; i++) {
+        const el = chars[i];
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dist = Math.hypot(mx - cx, my - cy);
+        const p = Math.max(0, 1 - dist / RADIUS);
+        const ease = p * p * (3 - 2 * p); // smoothstep
+        el.style.transform = `translateY(${ease * STRENGTH}px) scale(${1 + ease * SCALE_BOOST})`;
+        el.style.color = ease > 0.12 ? 'rgb(var(--c-accent))' : '';
+      }
+    }
+    rafRef.current = requestAnimationFrame(animate);
   }, []);
 
+  useEffect(() => {
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    const timer = setTimeout(() => { activeRef.current = true; }, 1400);
+    const onMove = (e) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener('mousemove', onMove);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [animate]);
+
   return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-      } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
+    <span className={`hero-name ${className}`}>
+      {text.split('').map((ch, i) => (
+        <span key={i} ref={(el) => (charsRef.current[i] = el)} className="wave-char">
+          <span className="char-inner">{ch}</span>
+        </span>
+      ))}
+    </span>
   );
 }
 
-/* ─── Thought Card ─── */
+/* ─── Masked words for title reveal ─── */
+function MaskWords({ text, className = '' }) {
+  return text.split(' ').map((w, i) => (
+    <Fragment key={i}>
+      <span className="tw-mask">
+        <span className={`tw ${className}`}>{w}</span>
+      </span>{' '}
+    </Fragment>
+  ));
+}
+
+/* ─── Thought Card (expandable essay) ─── */
 function ThoughtCard({ thought }) {
   const [open, setOpen] = useState(false);
-
   const blocks = thought.content.split('\n\n').filter((b) => b.trim());
 
   return (
-    <div className="group border border-white/[0.08] rounded-lg hover:border-neon-green/20 transition-all duration-500 relative overflow-hidden h-full">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neon-green/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div
+    <article className="border-t border-ink/15 py-8 md:py-10">
+      <header
         onClick={() => setOpen(!open)}
-        className="p-6 md:p-8 cursor-pointer hoverable select-none"
+        className="cursor-pointer hoverable select-none group"
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <h3 className="text-xl md:text-2xl font-display glitch-text">{thought.title}</h3>
-            <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 mt-1 block">
-              {thought.en}
-            </span>
+            <h3 className="font-display text-2xl md:text-4xl font-medium leading-tight group-hover:text-seal transition-colors">
+              {thought.title}
+            </h3>
+            <span className="kicker block mt-2">{thought.en}</span>
           </div>
-          <span
-            className={`text-neon-green font-mono text-lg shrink-0 transition-transform duration-300 ${
-              open ? 'rotate-45' : ''
-            }`}
-          >
+          <span className={`thought-plus font-display text-2xl text-seal shrink-0 ${open ? 'rotate-45' : ''}`}>
             +
           </span>
         </div>
-        <p className="text-sm text-zinc-500 mt-4 italic leading-relaxed">
-          &ldquo;{thought.excerpt}&rdquo;
+        <p className="font-serif italic text-ink-soft mt-4 text-base md:text-lg leading-relaxed">
+          “{thought.excerpt}”
         </p>
-        <div className="flex flex-wrap gap-2 mt-4">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 mt-4">
           {thought.tags.map((t) => (
-            <span
-              key={t}
-              className="text-[10px] font-mono text-zinc-600 border border-white/[0.08] px-2 py-0.5 rounded"
-            >
-              {t}
-            </span>
+            <span key={t} className="kicker text-[10px]">{t}</span>
           ))}
         </div>
-      </div>
+      </header>
 
       <div className={`thought-body ${open ? 'thought-open' : ''}`}>
-        <div className="overflow-hidden">
-          <div className="px-6 md:px-8 pb-8 pt-4 border-t border-white/[0.06]">
+        <div>
+          <div className="article-body pt-8 md:pt-10 max-w-2xl">
             {blocks.map((block, i) =>
               block.trim() === '---' ? (
-                <hr key={i} className="border-white/[0.08] my-6" />
+                <div key={i} className="ornament">✦</div>
               ) : (
-                <p
-                  key={i}
-                  className="text-[13px] md:text-sm text-zinc-400 leading-[1.9] mb-4 last:mb-0"
-                >
-                  {block}
-                </p>
+                <p key={i}>{block}</p>
               )
             )}
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
 /* ─── Data ─── */
-
 const BUILDS = [
   {
     name: 'HIRECLAW',
@@ -288,7 +306,6 @@ Claude说它不会记得这段对话。
   },
 ];
 
-
 const VIBES = {
   music: [
     '方大同', 'Frank Ocean', 'Radiohead', 'Pink Floyd', 'Queen',
@@ -305,52 +322,90 @@ const VIBES = {
     { title: 'Star Trek', cn: '星际迷航' },
     { title: 'Stranger Things', cn: '怪奇物语' },
   ],
-  move: ['篮球', '攀岩'],
+  move: [
+    { en: 'Basketball', cn: '篮球' },
+    { en: 'Climbing', cn: '攀岩' },
+  ],
 };
+
+const NAV = [
+  ['builds', 'Work'],
+  ['thoughts', 'Thoughts'],
+  ['vibes', 'Vibes'],
+  ['signal', 'Contact'],
+];
 
 /* ─── Main ─── */
 export default function Portfolio() {
+  const rootRef = useRef(null);
   const cursorDot = useRef(null);
   const cursorRing = useRef(null);
-  const [heroReady, setHeroReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() =>
-    typeof window !== 'undefined' ? localStorage.getItem('kx-theme') || 'dark' : 'dark'
+    typeof window !== 'undefined' ? localStorage.getItem('kx-mode') || 'light' : 'light'
   );
 
-  /* Theme sync to <html> + localStorage */
+  /* Theme → <html> + storage */
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem('kx-theme', theme);
+    localStorage.setItem('kx-mode', theme);
   }, [theme]);
-
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  /* Hero entrance: simple state toggle → CSS handles animation */
-  useEffect(() => {
-    const t = setTimeout(() => setHeroReady(true), 150);
-    return () => clearTimeout(t);
+  /* GSAP entrance + scroll choreography */
+  useLayoutEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
+      tl.from('.hero-name .char-inner', { yPercent: 120, opacity: 0, duration: 1.1, stagger: 0.05 }, 0.15)
+        .from('.hero-rule', { scaleX: 0, transformOrigin: 'left', duration: 1.1 }, 0.5)
+        .from('.hero-kicker', { opacity: 0, y: 12, duration: 0.9, ease: 'power2.out' }, 0.75);
+
+      gsap.utils.toArray('[data-title]').forEach((el) => {
+        gsap.from(el.querySelectorAll('.tw'), {
+          y: 24, opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.06,
+          scrollTrigger: { trigger: el, start: 'top 85%' },
+        });
+      });
+      gsap.utils.toArray('[data-rule]').forEach((el) => {
+        gsap.from(el, {
+          scaleX: 0, transformOrigin: 'left', duration: 1.1, ease: 'expo.out',
+          scrollTrigger: { trigger: el, start: 'top 92%' },
+        });
+      });
+      gsap.utils.toArray('[data-reveal]').forEach((el) => {
+        gsap.from(el, {
+          y: 30, opacity: 0, duration: 1, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 88%' },
+        });
+      });
+      gsap.utils.toArray('[data-stagger]').forEach((group) => {
+        gsap.from(group.children, {
+          y: 22, opacity: 0, duration: 0.8, ease: 'power3.out', stagger: 0.07,
+          scrollTrigger: { trigger: group, start: 'top 86%' },
+        });
+      });
+
+      window.addEventListener('load', () => ScrollTrigger.refresh());
+    }, rootRef);
+    return () => ctx.revert();
   }, []);
 
-  /* Custom cursor (GSAP for smooth following only) */
+  /* Custom ink cursor */
   useEffect(() => {
     const dot = cursorDot.current;
     const ring = cursorRing.current;
     if (!dot || !ring) return;
     if (!window.matchMedia('(pointer: fine)').matches) return;
-
     document.body.classList.add('has-custom-cursor');
-
     const move = (e) => {
       dot.style.left = e.clientX + 'px';
       dot.style.top = e.clientY + 'px';
       gsap.to(ring, { left: e.clientX, top: e.clientY, duration: 0.15, overwrite: true });
-
       const hit = !!e.target.closest('a, button, .hoverable');
       dot.classList.toggle('is-hovering', hit);
       ring.classList.toggle('is-hovering', hit);
     };
-
     window.addEventListener('mousemove', move);
     return () => {
       window.removeEventListener('mousemove', move);
@@ -359,84 +414,52 @@ export default function Portfolio() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-obsidian text-vintage-white overflow-x-hidden relative">
+    <div ref={rootRef} className="min-h-screen bg-paper text-ink overflow-x-hidden relative">
       <div ref={cursorDot} className="cursor-dot" />
       <div ref={cursorRing} className="cursor-ring" />
 
-      <div className="orb orb-1" />
-      <div className="orb orb-2" />
-      <div className="orb orb-3" />
+      <div className="wash wash-1" />
+      <div className="wash wash-2" />
       <div className="grain" />
 
-      {/* ─── NAV ─── */}
-      <nav className="fixed top-0 inset-x-0 z-50 mix-blend-difference">
-        <div className="flex justify-end items-center px-6 md:px-12 py-6">
-          {/* Desktop links */}
+      {/* ─── NAV / masthead ─── */}
+      <nav className="fixed top-0 inset-x-0 z-50 bg-paper/80 backdrop-blur-md border-b border-ink/10">
+        <div className="flex justify-between items-center px-6 md:px-10 py-4">
+          <a href="#top" className="font-display text-lg md:text-xl font-medium tracking-tight hoverable">
+            Kino&nbsp;Xuan
+          </a>
           <div className="hidden md:flex items-center gap-8">
-            {['builds','thoughts','vibes','signal'].map((id) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                className="nav-link text-[11px] tracking-[0.3em] uppercase text-white hoverable"
-              >
-                {id}
+            {NAV.map(([id, label]) => (
+              <a key={id} href={`#${id}`} className="nav-link text-[11px] tracking-[0.28em] uppercase text-ink-soft hoverable">
+                {label}
               </a>
             ))}
             <button
               onClick={toggleTheme}
-              className="theme-toggle w-8 h-8 flex items-center justify-center rounded-full border border-white/[0.15] hoverable"
-              aria-label="Toggle theme"
+              className="theme-toggle w-8 h-8 flex items-center justify-center rounded-full border hoverable"
+              aria-label="Toggle reading mode"
             >
-              {theme === 'dark' ? (
-                <Sun className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <Moon className="w-3.5 h-3.5 text-white" />
-              )}
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
-
-          {/* Mobile controls */}
           <div className="flex md:hidden items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="theme-toggle w-8 h-8 flex items-center justify-center rounded-full border border-white/[0.15] hoverable"
-              aria-label="Toggle theme"
+              className="theme-toggle w-8 h-8 flex items-center justify-center rounded-full border hoverable"
+              aria-label="Toggle reading mode"
             >
-              {theme === 'dark' ? (
-                <Sun className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <Moon className="w-3.5 h-3.5 text-white" />
-              )}
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="w-8 h-8 flex items-center justify-center hoverable"
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? (
-                <X className="w-4 h-4 text-white" />
-              ) : (
-                <Menu className="w-4 h-4 text-white" />
-              )}
+            <button onClick={() => setMenuOpen(!menuOpen)} className="w-8 h-8 flex items-center justify-center hoverable" aria-label="Menu">
+              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile dropdown */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-400 ease-out ${
-            menuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
-          }`}
-        >
+        <div className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${menuOpen ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="flex flex-col items-end gap-4 px-6 pb-6">
-            {['builds','thoughts','vibes','signal'].map((id) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                onClick={() => setMenuOpen(false)}
-                className="nav-link text-[11px] tracking-[0.3em] uppercase text-white hoverable"
-              >
-                {id}
+            {NAV.map(([id, label]) => (
+              <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="nav-link text-[11px] tracking-[0.28em] uppercase text-ink-soft hoverable">
+                {label}
               </a>
             ))}
           </div>
@@ -444,253 +467,160 @@ export default function Portfolio() {
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <section
-        className={`h-screen flex flex-col justify-center items-center relative select-none px-4 ${
-          heroReady ? 'hero-ready' : ''
-        }`}
-      >
-        <h1 className="font-display text-center leading-[0.85] tracking-tighter">
-          <div className="text-[20vw] md:text-[15vw] overflow-hidden">
-            {'KINO'.split('').map((ch, i) => (
-              <span
-                key={i}
-                className="hero-letter inline-block"
-                style={{ transitionDelay: `${i * 60}ms` }}
-              >
-                {ch}
-              </span>
-            ))}
-          </div>
-          <div className="text-[20vw] md:text-[15vw] overflow-hidden text-outline">
-            {'XUAN'.split('').map((ch, i) => (
-              <span
-                key={i}
-                className="hero-letter inline-block"
-                style={{ transitionDelay: `${(i + 4) * 60}ms` }}
-              >
-                {ch}
-              </span>
-            ))}
-          </div>
+      <section id="top" className="min-h-screen flex flex-col justify-center items-center text-center relative select-none px-4">
+        <h1 className="font-display font-medium leading-[0.82] tracking-[-0.02em]">
+          <span className="block text-[19vw] md:text-[13vw]"><WaveText text="Kino" /></span>
+          <span className="block text-[19vw] md:text-[13vw] italic"><WaveText text="Xuan" /></span>
         </h1>
-
+        <div className="hero-rule rule rule-seal w-24 md:w-32 mt-10 mb-6" />
+        <p className="hero-kicker kicker">recruiter · ai · writer</p>
       </section>
 
+      {/* ═══ WORK ═══ */}
+      <section id="builds" className="py-24 md:py-40 px-6 md:px-10 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          <p className="kicker mb-5" data-reveal>01 — Selected Work</p>
+          <h2 data-title className="font-display text-[2.4rem] md:text-7xl font-medium leading-[1.08] tracking-[-0.01em]">
+            <MaskWords text="Things I've" />
+            <MaskWords text="shipped" className="italic text-seal" />
+          </h2>
+          <div data-rule className="rule mt-8 mb-2" />
 
-
-      {/* ═══ BUILDS ═══ */}
-      <section id="builds" className="py-32 md:py-48 px-6 md:px-12">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-16 md:mb-24">
-            <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Things I've <span className="text-neon-pink">shipped</span>
-            </h2>
-          </Reveal>
-
-          <div className="space-y-4">
+          <div data-stagger>
             {BUILDS.map((b, i) => (
-              <Reveal key={b.name} delay={i * 120}>
-                <a
-                  href={b.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group block border border-white/[0.08] rounded-lg p-6 md:p-10 hover:border-neon-green/20 transition-all duration-500 relative overflow-hidden hoverable"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-neon-green/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-8">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap mb-2">
-                        <h3 className="text-xl md:text-2xl font-display glitch-text">
-                          {b.name}
-                        </h3>
-                        <span
-                          className={`text-[9px] font-mono tracking-widest px-2 py-0.5 rounded-full border ${
-                            b.live
-                              ? 'text-neon-green border-neon-green/30'
-                              : 'text-neon-pink border-neon-pink/30'
-                          }`}
-                        >
-                          {b.live ? 'ACTIVE' : 'BUILDING'}
-                        </span>
-                      </div>
-                      <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 block mb-3">
-                        {b.label}
-                      </span>
-                      <p className="text-sm text-zinc-400 leading-relaxed max-w-xl">{b.body}</p>
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        {b.stack.map((t) => (
-                          <span
-                            key={t}
-                            className="text-[10px] font-mono text-zinc-600 border border-white/[0.08] px-2 py-0.5 rounded"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <ArrowUpRight className="w-5 h-5 text-zinc-700 group-hover:text-neon-green transition-colors shrink-0 mt-1" />
+              <a
+                key={b.name}
+                href={b.href}
+                target="_blank"
+                rel="noreferrer"
+                className="build-row grid grid-cols-[2rem_1fr_auto] md:grid-cols-[3rem_1fr_auto] gap-4 md:gap-8 items-baseline py-7 md:py-9 border-t border-ink/10 last:border-b hoverable"
+              >
+                <span className="build-index font-display text-base md:text-xl text-ink-ghost">0{i + 1}</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="build-name font-display text-2xl md:text-4xl font-medium leading-none">{b.name}</h3>
+                    <span className="flex items-center gap-1.5 kicker text-[10px]">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: b.live ? 'rgb(var(--c-accent))' : 'rgb(var(--c-muted-3))' }} />
+                      {b.live ? 'Active' : 'Building'}
+                    </span>
                   </div>
-                </a>
-              </Reveal>
+                  <p className="font-serif italic text-ink-soft mt-1.5 text-sm md:text-base">{b.label}</p>
+                  <p className="font-serif text-ink-2 mt-3 max-w-2xl leading-relaxed text-[15px] md:text-base">{b.body}</p>
+                  <p className="kicker text-[10px] mt-4">{b.stack.join('   ·   ')}</p>
+                </div>
+                <ArrowUpRight className="build-arrow w-5 h-5 text-ink-ghost self-start mt-1" />
+              </a>
             ))}
           </div>
         </div>
       </section>
 
       {/* ═══ THOUGHTS ═══ */}
-      <section id="thoughts" className="py-32 md:py-48 px-6 md:px-12">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-16 md:mb-24">
-            <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Questions that<br /><span className="text-outline-sm">won't shut up</span>
-            </h2>
-          </Reveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {THOUGHTS.map((t, i) => (
-              <Reveal key={t.title} delay={i * 150}>
-                <ThoughtCard thought={t} />
-              </Reveal>
-            ))}
-          </div>
+      <section id="thoughts" className="py-24 md:py-40 px-6 md:px-10 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          <p className="kicker mb-5" data-reveal>02 — Writing</p>
+          <h2 data-title className="font-display text-[2.4rem] md:text-7xl font-medium leading-[1.08] tracking-[-0.01em]">
+            <MaskWords text="Questions that" />
+            <MaskWords text="won't shut up" className="italic text-seal" />
+          </h2>
+          <div data-rule className="rule mt-8" />
+          {THOUGHTS.map((t) => (
+            <ThoughtCard key={t.title} thought={t} />
+          ))}
         </div>
       </section>
 
       {/* ═══ VIBES ═══ */}
-      <section id="vibes" className="py-32 md:py-48 px-6 md:px-12">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-16 md:mb-24">
-            <h2 className="text-4xl md:text-7xl font-display leading-[0.95]">
-              Things I <span className="text-neon-pink">love</span>
-            </h2>
-          </Reveal>
+      <section id="vibes" className="py-24 md:py-40 px-6 md:px-10 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          <p className="kicker mb-5" data-reveal>03 — Off the Clock</p>
+          <h2 data-title className="font-display text-[2.4rem] md:text-7xl font-medium leading-[1.08] tracking-[-0.01em]">
+            <MaskWords text="Things I" />
+            <MaskWords text="love" className="italic text-seal" />
+          </h2>
+          <div data-rule className="rule mt-8 mb-16" />
 
           {/* Music */}
-          <Reveal className="mb-16">
-            <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
-              MUSIC
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {VIBES.music.map((artist, i) => (
-                <span
-                  key={artist}
-                  className="stagger-item text-sm md:text-base font-display px-4 py-2 border border-white/[0.08] rounded-full hover:border-neon-green/30 transition-colors hoverable"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  {artist}
-                </span>
+          <div className="mb-16" data-reveal>
+            <p className="kicker mb-5">Music</p>
+            <p className="font-display text-xl md:text-3xl font-light leading-relaxed">
+              {VIBES.music.map((a, i) => (
+                <Fragment key={a}>
+                  {i > 0 && <span className="text-ink-ghost mx-2 md:mx-3 select-none">·</span>}
+                  <span className="music-item hoverable">{a}</span>
+                </Fragment>
               ))}
-            </div>
-          </Reveal>
+            </p>
+          </div>
 
           {/* Cinema */}
-          <Reveal className="mb-16">
-            <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
-              CINEMA
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {VIBES.cinema.map((film, i) => (
-                <div
-                  key={film.title}
-                  className="stagger-item group border border-white/[0.08] rounded-lg p-4 hover:border-neon-pink/20 transition-all duration-500 hoverable"
-                  style={{ animationDelay: `${i * 80}ms` }}
-                >
-                  <span className="text-sm font-display block">{film.title}</span>
-                  <span className="text-[11px] text-zinc-600 font-mono">{film.cn}</span>
+          <div className="mb-16">
+            <p className="kicker mb-3" data-reveal>Cinema</p>
+            <div data-stagger>
+              {VIBES.cinema.map((f) => (
+                <div key={f.title} className="film-row hoverable">
+                  <span className="font-display text-lg md:text-2xl font-medium">{f.title}</span>
+                  <span className="font-serif italic text-ink-faint text-sm md:text-base whitespace-nowrap">{f.cn}</span>
                 </div>
               ))}
             </div>
-          </Reveal>
+          </div>
 
           {/* Move */}
-          <Reveal>
-            <h3 className="text-xs tracking-[0.4em] uppercase font-mono text-zinc-500 mb-6">
-              MOVE
-            </h3>
-            <div className="flex gap-4">
-              {VIBES.move.map((sport) => (
-                <span
-                  key={sport}
-                  className="text-lg md:text-xl font-display px-6 py-3 border border-white/[0.08] rounded-lg hover:border-neon-green/30 transition-colors hoverable"
-                >
-                  {sport}
+          <div className="mb-20" data-reveal>
+            <p className="kicker mb-5">Move</p>
+            <div className="flex flex-wrap gap-x-10 gap-y-3">
+              {VIBES.move.map((m) => (
+                <span key={m.en} className="font-display text-xl md:text-2xl font-medium">
+                  {m.en} <span className="font-serif italic text-ink-faint text-base">{m.cn}</span>
                 </span>
               ))}
             </div>
-          </Reveal>
+          </div>
 
-          {/* Talk to me */}
-          <div className="mt-24 border-t border-white/[0.06] pt-16">
-            <Reveal>
-              <div className="group border border-neon-green/20 rounded-lg p-8 md:p-12 skill-flagship relative overflow-hidden hoverable">
-                <div className="absolute inset-0 bg-gradient-to-br from-neon-green/[0.03] via-transparent to-neon-pink/[0.02] rounded-lg" />
-                <div className="relative z-10">
-                  <h3 className="text-2xl md:text-4xl font-display glitch-text mb-3">
-                    TALK TO ME
-                  </h3>
-                  <p className="text-sm text-zinc-400 leading-relaxed max-w-md mb-8">
-                    Install this, and your Claude becomes me.
-                  </p>
-                  <code className="text-[11px] font-mono text-zinc-400 bg-white/[0.03] border border-white/[0.08] rounded px-4 py-2.5 block overflow-x-auto select-all hoverable">
-                    <span className="text-neon-green">$</span>{' '}
-                    mkdir -p ~/.claude/skills/kino-persona && curl -sL https://raw.githubusercontent.com/kinoxuan0518/my-portfolio/main/public/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
-                  </code>
-                </div>
-              </div>
-            </Reveal>
+          {/* Talk to my AI — colophon */}
+          <div data-reveal>
+            <div className="colophon rounded-md p-8 md:p-12 hoverable">
+              <p className="kicker mb-4">The Author's AI</p>
+              <h3 className="font-display text-3xl md:text-5xl font-medium mb-3">Talk to me</h3>
+              <p className="font-serif italic text-ink-soft text-base md:text-lg max-w-md mb-8 leading-relaxed">
+                Install this, and your Claude starts thinking the way I do.
+              </p>
+              <code className="paper-code text-[11px] md:text-xs text-ink-2 px-4 py-3 block overflow-x-auto select-all hoverable leading-relaxed">
+                <span className="text-seal">$</span>{' '}
+                mkdir -p ~/.claude/skills/kino-persona && curl -sL https://raw.githubusercontent.com/kinoxuan0518/my-portfolio/main/public/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
+              </code>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ═══ SIGNAL ═══ */}
-      <section id="signal" className="py-32 md:py-48 px-6 md:px-12">
+      {/* ═══ SIGNAL / CONTACT ═══ */}
+      <section id="signal" className="py-28 md:py-48 px-6 md:px-10 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          <Reveal>
-            <blockquote className="text-2xl md:text-5xl font-display leading-snug mb-16">
-              The future of recruiting isn't better job boards. It's{' '}
-              <span className="text-neon-green">AI agents</span> that understand what makes
-              someone <span className="text-neon-pink">right</span>.
-            </blockquote>
-          </Reveal>
-          <Reveal>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <a
-                href="mailto:kinoxuanzl@gmail.com"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-neon-green text-obsidian font-bold text-sm tracking-wider rounded-full hover:shadow-[0_0_30px_rgba(57,255,20,0.3)] transition-all hoverable"
-              >
-                <Mail className="w-4 h-4" />
-                LET'S TALK
-              </a>
-              <a
-                href="https://github.com/kinoxuan0518"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/[0.15] text-sm tracking-wider rounded-full hover:border-neon-green/40 transition-all hoverable"
-              >
-                <Github className="w-4 h-4" />
-                GitHub
-              </a>
-              <a
-                href="https://www.linkedin.com/in/kino-xuan-703a37124/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/[0.15] text-sm tracking-wider rounded-full hover:border-neon-pink/40 transition-all hoverable"
-              >
-                <Linkedin className="w-4 h-4" />
-                LinkedIn
-              </a>
-            </div>
-          </Reveal>
+          <blockquote data-reveal className="font-display text-2xl md:text-5xl font-light italic leading-snug mb-16">
+            “The future of recruiting isn't better job boards. It's{' '}
+            <span className="text-seal not-italic font-medium">AI agents</span> that understand what makes someone{' '}
+            <span className="text-seal not-italic font-medium">right</span>.”
+          </blockquote>
+          <div data-stagger className="flex flex-col sm:flex-row justify-center items-center gap-6 md:gap-10 font-serif text-base md:text-lg">
+            <a href="mailto:kinoxuanzl@gmail.com" className="contact-link inline-flex items-center gap-2 hoverable">
+              <Mail className="w-4 h-4" /> kinoxuanzl@gmail.com
+            </a>
+            <a href="https://github.com/kinoxuan0518" target="_blank" rel="noreferrer" className="contact-link inline-flex items-center gap-2 hoverable">
+              <Github className="w-4 h-4" /> GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/kino-xuan-703a37124/" target="_blank" rel="noreferrer" className="contact-link inline-flex items-center gap-2 hoverable">
+              <Linkedin className="w-4 h-4" /> LinkedIn
+            </a>
+          </div>
         </div>
       </section>
 
-      <footer className="py-12 text-center border-t border-white/[0.05]">
-        <p className="text-[11px] text-zinc-600 font-mono tracking-widest">
-          © 2026 KINO XUAN
-        </p>
-        <p className="text-[10px] text-zinc-700 font-mono tracking-wider mt-1">
-          BUILT WITH ATTITUDE & AI
-        </p>
+      {/* ═══ COLOPHON / FOOTER ═══ */}
+      <footer className="py-12 px-6 border-t border-ink/10 text-center">
+        <p className="kicker">Set in Fraunces &amp; Newsreader</p>
+        <p className="font-serif italic text-ink-faint text-sm mt-2">© 2026 Kino Xuan · Built with attitude &amp; AI</p>
       </footer>
     </div>
   );
