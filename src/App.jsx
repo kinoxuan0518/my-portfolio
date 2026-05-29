@@ -1,118 +1,107 @@
-import { useEffect, useLayoutEffect, useRef, useState, useCallback, Fragment } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useId, Fragment } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowUpRight, Github, Linkedin, Mail, Sun, Moon, Menu, X } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, Github, Linkedin, Mail, Sun, Moon, Menu, X } from 'lucide-react';
 import './App.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ─── Wave Text: ink letters lift & warm toward the cursor ─── */
-function WaveText({ text, className = '' }) {
-  const charsRef = useRef([]);
-  const rafRef = useRef(null);
-  const mouseRef = useRef({ x: -9999, y: -9999 });
-  const activeRef = useRef(false);
+/* ─── Painterly block (SVG-generated oil texture) ─── */
+const PALETTE = {
+  blue:    ['#B4C8E2', '#7E9FCE', '#9DB8DD'],
+  green:   ['#B6D4D4', '#8CBBBD', '#A6CBCC'],
+  yellow:  ['#F6E3A6', '#E9C661', '#F0D789'],
+  lilac:   ['#D4C8EA', '#AD93D2', '#C4B3E0'],
+  neutral: ['#EFECE8', '#D8D2C9', '#E6E1DA'],
+};
 
-  const RADIUS = 140;
-  const STRENGTH = -14;
-  const SCALE_BOOST = 0.05;
-
-  const animate = useCallback(() => {
-    if (activeRef.current) {
-      const chars = charsRef.current;
-      const { x: mx, y: my } = mouseRef.current;
-      for (let i = 0; i < chars.length; i++) {
-        const el = chars[i];
-        if (!el) continue;
-        const r = el.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        const dist = Math.hypot(mx - cx, my - cy);
-        const p = Math.max(0, 1 - dist / RADIUS);
-        const ease = p * p * (3 - 2 * p); // smoothstep
-        el.style.transform = `translateY(${ease * STRENGTH}px) scale(${1 + ease * SCALE_BOOST})`;
-        el.style.color = ease > 0.12 ? 'rgb(var(--c-accent))' : '';
-      }
-    }
-    rafRef.current = requestAnimationFrame(animate);
-  }, []);
-
-  useEffect(() => {
-    if (!window.matchMedia('(pointer: fine)').matches) return;
-    const timer = setTimeout(() => { activeRef.current = true; }, 1400);
-    const onMove = (e) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
-    window.addEventListener('mousemove', onMove);
-    rafRef.current = requestAnimationFrame(animate);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('mousemove', onMove);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [animate]);
-
+function PaintBlock({ tint = 'blue', seed = 4, fit = 'slice' }) {
+  const raw = useId();
+  const id = raw.replace(/[:]/g, '');
+  const c = PALETTE[tint] || PALETTE.blue;
   return (
-    <span className={`hero-name ${className}`}>
-      {text.split('').map((ch, i) => (
-        <span key={i} ref={(el) => (charsRef.current[i] = el)} className="wave-char">
-          <span className="char-inner">{ch}</span>
-        </span>
-      ))}
-    </span>
+    <svg
+      className="paint-svg"
+      viewBox="0 0 300 300"
+      preserveAspectRatio={fit === 'none' ? 'none' : 'xMidYMid slice'}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={c[0]} />
+          <stop offset="55%" stopColor={c[2]} />
+          <stop offset="100%" stopColor={c[1]} />
+        </linearGradient>
+        <filter id={`edge${id}`} x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.008 0.11" numOctaves="3" seed={seed} result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="28" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id={`streak${id}`}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.006 0.045" numOctaves="2" seed={seed + 3} />
+          <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.16 0" />
+        </filter>
+        <filter id={`tex${id}`}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed={seed + 9} />
+          <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0" />
+        </filter>
+      </defs>
+      <rect x="12" y="12" width="276" height="276" fill={`url(#g${id})`} filter={`url(#edge${id})`} />
+      <rect x="0" y="0" width="300" height="300" filter={`url(#streak${id})`} style={{ mixBlendMode: 'soft-light' }} />
+      <rect x="0" y="0" width="300" height="300" filter={`url(#tex${id})`} opacity="0.1" style={{ mixBlendMode: 'multiply' }} />
+    </svg>
   );
 }
 
-/* ─── Masked words for title reveal ─── */
-function MaskWords({ text, className = '' }) {
-  return text.split(' ').map((w, i) => (
-    <Fragment key={i}>
-      <span className="tw-mask">
-        <span className={`tw ${className}`}>{w}</span>
-      </span>{' '}
-    </Fragment>
-  ));
+/* ─── Headline split into words for staggered reveal ─── */
+function Headline({ as: Tag = 'h2', lines, className = '' }) {
+  return (
+    <Tag data-title className={className}>
+      {lines.map((line, li) => (
+        <span key={li} className="block">
+          {line.split(' ').map((w, wi) => (
+            <Fragment key={wi}>
+              <span className="w inline-block">{w}</span>{' '}
+            </Fragment>
+          ))}
+        </span>
+      ))}
+    </Tag>
+  );
 }
 
-/* ─── Thought Card (expandable essay) ─── */
-function ThoughtCard({ thought }) {
+/* ─── Journal entry (expandable essay) ─── */
+function JournalEntry({ thought, index }) {
   const [open, setOpen] = useState(false);
   const blocks = thought.content.split('\n\n').filter((b) => b.trim());
-
   return (
-    <article className="border-t border-ink/15 py-8 md:py-10">
-      <header
-        onClick={() => setOpen(!open)}
-        className="cursor-pointer hoverable select-none group"
-      >
+    <article className="border-t border-line py-8 md:py-10">
+      <header onClick={() => setOpen(!open)} className="cursor-pointer hoverable select-none group">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <h3 className="font-display text-2xl md:text-4xl font-medium leading-tight group-hover:text-seal transition-colors">
+            <span className="eyebrow block mb-3">{String(index).padStart(2, '0')} — {thought.en}</span>
+            <h3 className="font-display text-3xl md:text-5xl font-medium leading-tight group-hover:text-ink-2 transition-colors">
               {thought.title}
             </h3>
-            <span className="kicker block mt-2">{thought.en}</span>
           </div>
-          <span className={`thought-plus font-display text-2xl text-seal shrink-0 ${open ? 'rotate-45' : ''}`}>
-            +
-          </span>
+          <span className={`thought-plus font-display text-3xl text-ink-3 shrink-0 ${open ? 'rotate-45' : ''}`}>+</span>
         </div>
-        <p className="font-serif italic text-ink-soft mt-4 text-base md:text-lg leading-relaxed">
-          “{thought.excerpt}”
+        <p className="font-display italic text-ink-2 mt-4 text-lg md:text-xl leading-relaxed max-w-2xl">
+          {thought.excerpt}
         </p>
         <div className="flex flex-wrap gap-x-5 gap-y-1 mt-4">
           {thought.tags.map((t) => (
-            <span key={t} className="kicker text-[10px]">{t}</span>
+            <span key={t} className="eyebrow text-[10px]">{t}</span>
           ))}
         </div>
       </header>
-
       <div className={`thought-body ${open ? 'thought-open' : ''}`}>
         <div>
           <div className="article-body pt-8 md:pt-10 max-w-2xl">
             {blocks.map((block, i) =>
-              block.trim() === '---' ? (
-                <div key={i} className="ornament">✦</div>
-              ) : (
-                <p key={i}>{block}</p>
-              )
+              block.trim() === '---'
+                ? <div key={i} className="ornament">✦</div>
+                : <p key={i}>{block}</p>
             )}
           </div>
         </div>
@@ -130,6 +119,7 @@ const BUILDS = [
     stack: ['Claude', 'GPT-4', 'Python', 'Agent'],
     href: 'https://github.com/kinoxuan0518/hireclaw',
     live: true,
+    tint: 'blue',
   },
   {
     name: 'BOSSZHIBIN',
@@ -138,6 +128,7 @@ const BUILDS = [
     stack: ['Chrome Extension', 'Node.js', 'Puppeteer', 'LLM'],
     href: 'https://github.com/kinoxuan0518',
     live: true,
+    tint: 'green',
   },
   {
     name: 'MAIMAI RECRUITER',
@@ -146,6 +137,7 @@ const BUILDS = [
     stack: ['Automation', 'NLP', 'Browser APIs'],
     href: 'https://github.com/kinoxuan0518/maimai-recruiter',
     live: false,
+    tint: 'yellow',
   },
 ];
 
@@ -307,11 +299,7 @@ Claude说它不会记得这段对话。
 ];
 
 const VIBES = {
-  music: [
-    '方大同', 'Frank Ocean', 'Radiohead', 'Pink Floyd', 'Queen',
-    'Post Malone', '五月天', '孙燕姿', 'Justin Bieber',
-    '功夫胖', 'Bad Bunny', '张震岳',
-  ],
+  music: ['方大同', 'Frank Ocean', 'Radiohead', 'Pink Floyd', 'Queen', 'Post Malone', '五月天', '孙燕姿', 'Justin Bieber', '功夫胖', 'Bad Bunny', '张震岳'],
   cinema: [
     { title: 'Cowboy Bebop', cn: '星际牛仔' },
     { title: 'Neon Genesis Evangelion', cn: '新世纪福音战士' },
@@ -322,17 +310,15 @@ const VIBES = {
     { title: 'Star Trek', cn: '星际迷航' },
     { title: 'Stranger Things', cn: '怪奇物语' },
   ],
-  move: [
-    { en: 'Basketball', cn: '篮球' },
-    { en: 'Climbing', cn: '攀岩' },
-  ],
+  move: [{ en: 'Basketball', cn: '篮球' }, { en: 'Climbing', cn: '攀岩' }],
 };
 
 const NAV = [
-  ['builds', 'Work'],
-  ['thoughts', 'Thoughts'],
+  ['works', 'Works'],
+  ['writing', 'Writing'],
+  ['about', 'About'],
   ['vibes', 'Vibes'],
-  ['signal', 'Contact'],
+  ['contact', 'Contact'],
 ];
 
 /* ─── Main ─── */
@@ -345,53 +331,77 @@ export default function Portfolio() {
     typeof window !== 'undefined' ? localStorage.getItem('kx-mode') || 'light' : 'light'
   );
 
-  /* Theme → <html> + storage */
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('kx-mode', theme);
   }, [theme]);
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  /* GSAP entrance + scroll choreography */
+  /* GSAP choreography — slow, gallery-paced */
   useLayoutEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-      tl.from('.hero-name .char-inner', { yPercent: 120, opacity: 0, duration: 1.1, stagger: 0.05 }, 0.15)
-        .from('.hero-rule', { scaleX: 0, transformOrigin: 'left', duration: 1.1 }, 0.5)
-        .from('.hero-kicker', { opacity: 0, y: 12, duration: 0.9, ease: 'power2.out' }, 0.75);
+      // Hero
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.from('#home [data-title] .w', { y: 30, opacity: 0, duration: 1, stagger: 0.06 }, 0.2)
+        .from('#home .hero-eyebrow', { opacity: 0, y: 14, duration: 0.8 }, 0.3)
+        .from('#home .hero-cta', { opacity: 0, y: 16, duration: 0.8, stagger: 0.1 }, 0.7)
+        .from('#home [data-paint]', { clipPath: 'inset(0 100% 0 0)', duration: 1.4, ease: 'power2.inOut' }, 0.1)
+        .from('.vmark', { opacity: 0, duration: 1.2 }, 0.6);
 
       gsap.utils.toArray('[data-title]').forEach((el) => {
-        gsap.from(el.querySelectorAll('.tw'), {
-          y: 24, opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.06,
-          scrollTrigger: { trigger: el, start: 'top 85%' },
+        if (el.closest('#home')) return;
+        gsap.from(el.querySelectorAll('.w'), {
+          y: 26, opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.05,
+          scrollTrigger: { trigger: el, start: 'top 86%' },
         });
       });
-      gsap.utils.toArray('[data-rule]').forEach((el) => {
+      gsap.utils.toArray('[data-paint]').forEach((el) => {
+        if (el.closest('#home')) return;
         gsap.from(el, {
-          scaleX: 0, transformOrigin: 'left', duration: 1.1, ease: 'expo.out',
-          scrollTrigger: { trigger: el, start: 'top 92%' },
+          clipPath: 'inset(0 100% 0 0)', duration: 1.3, ease: 'power2.inOut',
+          scrollTrigger: { trigger: el, start: 'top 88%' },
         });
       });
-      gsap.utils.toArray('[data-reveal]').forEach((el) => {
+      gsap.utils.toArray('[data-fade]').forEach((el) => {
         gsap.from(el, {
-          y: 30, opacity: 0, duration: 1, ease: 'power3.out',
+          y: 28, opacity: 0, duration: 1, ease: 'power3.out',
           scrollTrigger: { trigger: el, start: 'top 88%' },
         });
       });
       gsap.utils.toArray('[data-stagger]').forEach((group) => {
         gsap.from(group.children, {
-          y: 22, opacity: 0, duration: 0.8, ease: 'power3.out', stagger: 0.07,
+          y: 24, opacity: 0, duration: 0.85, ease: 'power3.out', stagger: 0.08,
           scrollTrigger: { trigger: group, start: 'top 86%' },
         });
       });
 
       window.addEventListener('load', () => ScrollTrigger.refresh());
     }, rootRef);
-    return () => ctx.revert();
+
+    // Safety net: if an on-screen tween stalls, never leave content hidden.
+    // Only touches elements currently in view — off-screen ones keep their
+    // scroll-triggered reveal.
+    const safety = setTimeout(() => {
+      if (!rootRef.current) return;
+      const vh = window.innerHeight;
+      rootRef.current
+        .querySelectorAll('[data-fade], [data-title] .w, [data-paint], [data-stagger] > *, .hero-eyebrow, .hero-cta, .vmark')
+        .forEach((el) => {
+          const r = el.getBoundingClientRect();
+          const inView = r.top < vh && r.bottom > 0;
+          if (inView && parseFloat(getComputedStyle(el).opacity) < 0.99) {
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+            el.style.clipPath = 'none';
+          }
+        });
+    }, 4000);
+
+    return () => { clearTimeout(safety); ctx.revert(); };
   }, []);
 
-  /* Custom ink cursor */
+  /* Custom cursor */
   useEffect(() => {
     const dot = cursorDot.current;
     const ring = cursorRing.current;
@@ -401,7 +411,7 @@ export default function Portfolio() {
     const move = (e) => {
       dot.style.left = e.clientX + 'px';
       dot.style.top = e.clientY + 'px';
-      gsap.to(ring, { left: e.clientX, top: e.clientY, duration: 0.15, overwrite: true });
+      gsap.to(ring, { left: e.clientX, top: e.clientY, duration: 0.16, overwrite: true });
       const hit = !!e.target.closest('a, button, .hoverable');
       dot.classList.toggle('is-hovering', hit);
       ring.classList.toggle('is-hovering', hit);
@@ -414,213 +424,211 @@ export default function Portfolio() {
   }, []);
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-paper text-ink overflow-x-hidden relative">
+    <div ref={rootRef} className="min-h-screen bg-canvas text-ink overflow-x-hidden relative font-sans">
       <div ref={cursorDot} className="cursor-dot" />
       <div ref={cursorRing} className="cursor-ring" />
+      <div className="canvas-grain" />
+      <span className="vmark">KINO</span>
 
-      <div className="wash wash-1" />
-      <div className="wash wash-2" />
-      <div className="grain" />
-
-      {/* ─── NAV / masthead ─── */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-paper/80 backdrop-blur-md border-b border-ink/10">
-        <div className="flex justify-between items-center px-6 md:px-10 py-4">
-          <a href="#top" className="font-display text-lg md:text-xl font-medium tracking-tight hoverable">
-            Kino&nbsp;Xuan
-          </a>
-          <div className="hidden md:flex items-center gap-8">
+      {/* ─── NAV ─── */}
+      <nav className="fixed top-0 inset-x-0 z-50 bg-canvas/80 backdrop-blur-md">
+        <div className="max-w-[1440px] mx-auto flex justify-between items-center px-6 md:px-12 py-5">
+          <a href="#home" className="font-display text-2xl font-medium tracking-tight hoverable">Kino Xuan</a>
+          <div className="hidden md:flex items-center gap-9">
             {NAV.map(([id, label]) => (
-              <a key={id} href={`#${id}`} className="nav-link text-[11px] tracking-[0.28em] uppercase text-ink-soft hoverable">
-                {label}
-              </a>
+              <a key={id} href={`#${id}`} className="nav-link text-[11px] tracking-[0.22em] uppercase text-ink-2 hoverable">{label}</a>
             ))}
-            <button
-              onClick={toggleTheme}
-              className="theme-toggle w-8 h-8 flex items-center justify-center rounded-full border hoverable"
-              aria-label="Toggle reading mode"
-            >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            <button onClick={toggleTheme} className="theme-toggle w-9 h-9 flex items-center justify-center rounded-full border hoverable" aria-label="Toggle mode">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
           </div>
           <div className="flex md:hidden items-center gap-3">
-            <button
-              onClick={toggleTheme}
-              className="theme-toggle w-8 h-8 flex items-center justify-center rounded-full border hoverable"
-              aria-label="Toggle reading mode"
-            >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            <button onClick={toggleTheme} className="theme-toggle w-9 h-9 flex items-center justify-center rounded-full border hoverable" aria-label="Toggle mode">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <button onClick={() => setMenuOpen(!menuOpen)} className="w-8 h-8 flex items-center justify-center hoverable" aria-label="Menu">
-              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            <button onClick={() => setMenuOpen(!menuOpen)} className="w-9 h-9 flex items-center justify-center hoverable" aria-label="Menu">
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-        <div className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${menuOpen ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${menuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="flex flex-col items-end gap-4 px-6 pb-6">
             {NAV.map(([id, label]) => (
-              <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="nav-link text-[11px] tracking-[0.28em] uppercase text-ink-soft hoverable">
-                {label}
-              </a>
+              <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="nav-link text-[11px] tracking-[0.22em] uppercase text-ink-2 hoverable">{label}</a>
             ))}
           </div>
         </div>
       </nav>
 
-      {/* ═══ HERO ═══ */}
-      <section id="top" className="min-h-screen flex flex-col justify-center items-center text-center relative select-none px-4">
-        <h1 className="font-display font-medium leading-[0.82] tracking-[-0.02em]">
-          <span className="block text-[19vw] md:text-[13vw]"><WaveText text="Kino" /></span>
-          <span className="block text-[19vw] md:text-[13vw] italic"><WaveText text="Xuan" /></span>
-        </h1>
-        <div className="hero-rule rule rule-seal w-24 md:w-32 mt-10 mb-6" />
-        <p className="hero-kicker kicker">recruiter · ai · writer</p>
-      </section>
+      <main className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20">
 
-      {/* ═══ WORK ═══ */}
-      <section id="builds" className="py-24 md:py-40 px-6 md:px-10 relative z-10">
-        <div className="max-w-5xl mx-auto">
-          <p className="kicker mb-5" data-reveal>01 — Selected Work</p>
-          <h2 data-title className="font-display text-[2.4rem] md:text-7xl font-medium leading-[1.08] tracking-[-0.01em]">
-            <MaskWords text="Things I've" />
-            <MaskWords text="shipped" className="italic text-seal" />
-          </h2>
-          <div data-rule className="rule mt-8 mb-2" />
+        {/* ═══ HOME ═══ */}
+        <section id="home" className="min-h-screen grid lg:grid-cols-2 gap-10 lg:gap-16 items-center pt-28 pb-16">
+          <div className="order-2 lg:order-1">
+            <span className="hero-eyebrow eyebrow block mb-7">Recruiter · AI Builder · Writer</span>
+            <Headline
+              as="h1"
+              lines={['Make space', 'for what only', 'humans can do.']}
+              className="font-display text-5xl md:text-7xl lg:text-[5.4rem] font-medium leading-[1.04] tracking-[-0.01em]"
+            />
+            <p className="mt-8 text-ink-2 text-base md:text-lg leading-relaxed max-w-md hero-eyebrow">
+              I build AI that handles the repetitive machinery of hiring — so the human parts can stay human.
+            </p>
+            <div className="flex items-center gap-7 mt-10">
+              <a href="#works" className="btn-paint hoverable hero-cta">
+                <PaintBlock tint="blue" seed={7} fit="none" />
+                View Work
+              </a>
+              <a href="#contact" className="link-tertiary hoverable hero-cta">Contact</a>
+            </div>
+          </div>
+          <div className="order-1 lg:order-2 paint-wrap rounded-sm h-[44vh] lg:h-[72vh]" data-paint>
+            <PaintBlock tint="blue" seed={11} />
+          </div>
+        </section>
 
-          <div data-stagger>
+        {/* ═══ ABOUT ═══ */}
+        <section id="about" className="py-24 md:py-36 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="paint-wrap rounded-sm h-[40vh] lg:h-[58vh]" data-paint>
+            <PaintBlock tint="lilac" seed={5} />
+          </div>
+          <div>
+            <span className="eyebrow block mb-5" data-fade>01 — About</span>
+            <Headline as="h2" lines={['About Kino']} className="font-display text-4xl md:text-6xl font-medium leading-[1.05] mb-7" />
+            <div className="space-y-5 text-ink-2 text-base md:text-lg leading-relaxed max-w-lg" data-fade>
+              <p>I'm a recruiter turned AI builder. I make agents that do the repetitive parts of hiring — sourcing, screening, the first hello — so the work that actually needs a human can stay human.</p>
+              <p>Off the clock I write: about whether machines can feel, about where value comes from, about slower kinds of attention. This is where I keep the work and the thinking, side by side.</p>
+            </div>
+            <div className="mt-9" data-fade>
+              <a href="#writing" className="arrow-link hoverable">Read the writing <ArrowRight className="w-4 h-4" /></a>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ WORKS ═══ */}
+        <section id="works" className="py-24 md:py-36">
+          <div className="flex items-end justify-between gap-6 mb-14 md:mb-20">
+            <div>
+              <span className="eyebrow block mb-5" data-fade>02 — Works</span>
+              <Headline as="h2" lines={['Selected work']} className="font-display text-4xl md:text-7xl font-medium leading-[1.04]" />
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10" data-stagger>
             {BUILDS.map((b, i) => (
-              <a
-                key={b.name}
-                href={b.href}
-                target="_blank"
-                rel="noreferrer"
-                className="build-row grid grid-cols-[2rem_1fr_auto] md:grid-cols-[3rem_1fr_auto] gap-4 md:gap-8 items-baseline py-7 md:py-9 border-t border-ink/10 last:border-b hoverable"
-              >
-                <span className="build-index font-display text-base md:text-xl text-ink-ghost">0{i + 1}</span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="build-name font-display text-2xl md:text-4xl font-medium leading-none">{b.name}</h3>
-                    <span className="flex items-center gap-1.5 kicker text-[10px]">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: b.live ? 'rgb(var(--c-accent))' : 'rgb(var(--c-muted-3))' }} />
-                      {b.live ? 'Active' : 'Building'}
-                    </span>
-                  </div>
-                  <p className="font-serif italic text-ink-soft mt-1.5 text-sm md:text-base">{b.label}</p>
-                  <p className="font-serif text-ink-2 mt-3 max-w-2xl leading-relaxed text-[15px] md:text-base">{b.body}</p>
-                  <p className="kicker text-[10px] mt-4">{b.stack.join('   ·   ')}</p>
+              <a key={b.name} href={b.href} target="_blank" rel="noreferrer" className="work-card group block hoverable">
+                <div className="paint-wrap rounded-sm h-60 md:h-72 mb-6">
+                  <PaintBlock tint={b.tint} seed={(i + 1) * 13} />
+                  <span className="absolute top-4 left-4 z-10 eyebrow text-[10px] text-white/90">{String(i + 1).padStart(2, '0')}</span>
+                  <span className={`absolute top-4 right-4 z-10 text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full ${b.live ? 'bg-white/85 text-green-700' : 'bg-white/70 text-ink-2'}`} style={{ color: b.live ? '#3f7a55' : undefined }}>
+                    {b.live ? 'Active' : 'Building'}
+                  </span>
                 </div>
-                <ArrowUpRight className="build-arrow w-5 h-5 text-ink-ghost self-start mt-1" />
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-display text-2xl md:text-3xl font-medium leading-tight">{b.name}</h3>
+                  <ArrowUpRight className="work-arrow w-5 h-5 text-ink-3 mt-1 shrink-0" />
+                </div>
+                <span className="eyebrow text-[10px] block mt-1">{b.label}</span>
+                <p className="text-ink-2 text-sm leading-relaxed mt-3">{b.body}</p>
+                <p className="eyebrow text-[10px] mt-4 text-ink-3">{b.stack.join('  ·  ')}</p>
               </a>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══ THOUGHTS ═══ */}
-      <section id="thoughts" className="py-24 md:py-40 px-6 md:px-10 relative z-10">
-        <div className="max-w-5xl mx-auto">
-          <p className="kicker mb-5" data-reveal>02 — Writing</p>
-          <h2 data-title className="font-display text-[2.4rem] md:text-7xl font-medium leading-[1.08] tracking-[-0.01em]">
-            <MaskWords text="Questions that" />
-            <MaskWords text="won't shut up" className="italic text-seal" />
-          </h2>
-          <div data-rule className="rule mt-8" />
-          {THOUGHTS.map((t) => (
-            <ThoughtCard key={t.title} thought={t} />
-          ))}
-        </div>
-      </section>
+        {/* ═══ WRITING / JOURNAL ═══ */}
+        <section id="writing" className="py-24 md:py-36">
+          <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-20 items-start">
+            <div className="lg:sticky lg:top-28">
+              <span className="eyebrow block mb-5" data-fade>03 — Writing</span>
+              <Headline as="h2" lines={['On slower time', 'and attention']} className="font-display text-4xl md:text-6xl font-medium leading-[1.05]" />
+              <p className="text-ink-2 mt-7 leading-relaxed max-w-sm" data-fade>
+                Notes on AI, consciousness, and value — written slowly, mostly at night. Tap to read.
+              </p>
+            </div>
+            <div data-fade>
+              {THOUGHTS.map((t, i) => (
+                <JournalEntry key={t.title} thought={t} index={i + 1} />
+              ))}
+            </div>
+          </div>
+        </section>
 
-      {/* ═══ VIBES ═══ */}
-      <section id="vibes" className="py-24 md:py-40 px-6 md:px-10 relative z-10">
-        <div className="max-w-5xl mx-auto">
-          <p className="kicker mb-5" data-reveal>03 — Off the Clock</p>
-          <h2 data-title className="font-display text-[2.4rem] md:text-7xl font-medium leading-[1.08] tracking-[-0.01em]">
-            <MaskWords text="Things I" />
-            <MaskWords text="love" className="italic text-seal" />
-          </h2>
-          <div data-rule className="rule mt-8 mb-16" />
+        {/* ═══ VIBES ═══ */}
+        <section id="vibes" className="py-24 md:py-36">
+          <span className="eyebrow block mb-5" data-fade>04 — Off the Clock</span>
+          <Headline as="h2" lines={['Things I love']} className="font-display text-4xl md:text-7xl font-medium leading-[1.04] mb-16" />
 
-          {/* Music */}
-          <div className="mb-16" data-reveal>
-            <p className="kicker mb-5">Music</p>
-            <p className="font-display text-xl md:text-3xl font-light leading-relaxed">
+          <div className="mb-16" data-fade>
+            <p className="eyebrow mb-5">Music</p>
+            <p className="font-display text-2xl md:text-4xl font-light leading-relaxed">
               {VIBES.music.map((a, i) => (
                 <Fragment key={a}>
-                  {i > 0 && <span className="text-ink-ghost mx-2 md:mx-3 select-none">·</span>}
+                  {i > 0 && <span className="text-ink-4 mx-2 md:mx-3 select-none">·</span>}
                   <span className="music-item hoverable">{a}</span>
                 </Fragment>
               ))}
             </p>
           </div>
 
-          {/* Cinema */}
           <div className="mb-16">
-            <p className="kicker mb-3" data-reveal>Cinema</p>
+            <p className="eyebrow mb-3" data-fade>Cinema</p>
             <div data-stagger>
               {VIBES.cinema.map((f) => (
                 <div key={f.title} className="film-row hoverable">
-                  <span className="font-display text-lg md:text-2xl font-medium">{f.title}</span>
-                  <span className="font-serif italic text-ink-faint text-sm md:text-base whitespace-nowrap">{f.cn}</span>
+                  <span className="font-display text-xl md:text-2xl font-medium">{f.title}</span>
+                  <span className="text-ink-3 text-sm md:text-base whitespace-nowrap">{f.cn}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Move */}
-          <div className="mb-20" data-reveal>
-            <p className="kicker mb-5">Move</p>
+          <div className="mb-20" data-fade>
+            <p className="eyebrow mb-5">Move</p>
             <div className="flex flex-wrap gap-x-10 gap-y-3">
               {VIBES.move.map((m) => (
-                <span key={m.en} className="font-display text-xl md:text-2xl font-medium">
-                  {m.en} <span className="font-serif italic text-ink-faint text-base">{m.cn}</span>
+                <span key={m.en} className="font-display text-2xl md:text-3xl font-medium">
+                  {m.en} <span className="text-ink-3 text-base">{m.cn}</span>
                 </span>
               ))}
             </div>
           </div>
 
-          {/* Talk to my AI — colophon */}
-          <div data-reveal>
-            <div className="colophon rounded-md p-8 md:p-12 hoverable">
-              <p className="kicker mb-4">The Author's AI</p>
+          {/* Persona card */}
+          <div className="relative paint-wrap rounded-sm p-8 md:p-12 overflow-hidden" data-fade>
+            <div className="absolute inset-0 opacity-[0.5]"><PaintBlock tint="yellow" seed={21} /></div>
+            <div className="relative z-10 bg-canvas/70 backdrop-blur-sm rounded-sm p-7 md:p-10 max-w-2xl">
+              <p className="eyebrow mb-4">The Author's AI</p>
               <h3 className="font-display text-3xl md:text-5xl font-medium mb-3">Talk to me</h3>
-              <p className="font-serif italic text-ink-soft text-base md:text-lg max-w-md mb-8 leading-relaxed">
+              <p className="text-ink-2 text-base md:text-lg max-w-md mb-8 leading-relaxed">
                 Install this, and your Claude starts thinking the way I do.
               </p>
               <code className="paper-code text-[11px] md:text-xs text-ink-2 px-4 py-3 block overflow-x-auto select-all hoverable leading-relaxed">
-                <span className="text-seal">$</span>{' '}
+                <span style={{ color: '#6f93c8' }}>$</span>{' '}
                 mkdir -p ~/.claude/skills/kino-persona && curl -sL https://raw.githubusercontent.com/kinoxuan0518/my-portfolio/main/public/skills/kino-persona/SKILL.md -o ~/.claude/skills/kino-persona/SKILL.md
               </code>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══ SIGNAL / CONTACT ═══ */}
-      <section id="signal" className="py-28 md:py-48 px-6 md:px-10 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <blockquote data-reveal className="font-display text-2xl md:text-5xl font-light italic leading-snug mb-16">
-            “The future of recruiting isn't better job boards. It's{' '}
-            <span className="text-seal not-italic font-medium">AI agents</span> that understand what makes someone{' '}
-            <span className="text-seal not-italic font-medium">right</span>.”
-          </blockquote>
-          <div data-stagger className="flex flex-col sm:flex-row justify-center items-center gap-6 md:gap-10 font-serif text-base md:text-lg">
-            <a href="mailto:kinoxuanzl@gmail.com" className="contact-link inline-flex items-center gap-2 hoverable">
-              <Mail className="w-4 h-4" /> kinoxuanzl@gmail.com
-            </a>
-            <a href="https://github.com/kinoxuan0518" target="_blank" rel="noreferrer" className="contact-link inline-flex items-center gap-2 hoverable">
-              <Github className="w-4 h-4" /> GitHub
-            </a>
-            <a href="https://www.linkedin.com/in/kino-xuan-703a37124/" target="_blank" rel="noreferrer" className="contact-link inline-flex items-center gap-2 hoverable">
-              <Linkedin className="w-4 h-4" /> LinkedIn
-            </a>
+        {/* ═══ CONTACT ═══ */}
+        <section id="contact" className="py-28 md:py-44 text-center">
+          <span className="eyebrow block mb-8" data-fade>05 — Contact</span>
+          <Headline
+            as="blockquote"
+            lines={["The future of recruiting", "isn't better job boards.", "It's agents that understand", 'what makes someone right.']}
+            className="font-display text-3xl md:text-6xl font-light italic leading-[1.12] max-w-4xl mx-auto"
+          />
+          <div data-stagger className="flex flex-col sm:flex-row justify-center items-center gap-6 md:gap-10 mt-16 text-base md:text-lg">
+            <a href="mailto:kinoxuanzl@gmail.com" className="contact-link inline-flex items-center gap-2 hoverable"><Mail className="w-4 h-4" /> kinoxuanzl@gmail.com</a>
+            <a href="https://github.com/kinoxuan0518" target="_blank" rel="noreferrer" className="contact-link inline-flex items-center gap-2 hoverable"><Github className="w-4 h-4" /> GitHub</a>
+            <a href="https://www.linkedin.com/in/kino-xuan-703a37124/" target="_blank" rel="noreferrer" className="contact-link inline-flex items-center gap-2 hoverable"><Linkedin className="w-4 h-4" /> LinkedIn</a>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* ═══ COLOPHON / FOOTER ═══ */}
-      <footer className="py-12 px-6 border-t border-ink/10 text-center">
-        <p className="kicker">Set in Fraunces &amp; Newsreader</p>
-        <p className="font-serif italic text-ink-faint text-sm mt-2">© 2026 Kino Xuan · Built with attitude &amp; AI</p>
+      <footer className="py-12 px-6 border-t border-line text-center">
+        <p className="eyebrow">Set in Cormorant Garamond &amp; Inter</p>
+        <p className="text-ink-3 text-sm mt-2">© 2026 Kino Xuan · Built with attitude &amp; AI</p>
       </footer>
     </div>
   );
