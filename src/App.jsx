@@ -367,7 +367,6 @@ export default function Portfolio() {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.from('#home [data-title] .w', { y: 30, opacity: 0, duration: 1, stagger: 0.06 }, 0.2)
-        .from('#home .hero-cta', { opacity: 0, y: 16, duration: 0.8, stagger: 0.1 }, 0.65)
         .from('#home [data-paint]', { clipPath: 'inset(0 100% 0 0)', duration: 1.4, ease: 'power2.inOut' }, 0.1)
         .from('.vmark', { opacity: 0, duration: 1.2 }, 0.6);
 
@@ -496,10 +495,6 @@ export default function Portfolio() {
               lines={T(['Innovation is', 'born of', 'constraint.'], ['创新往往', '诞生于', '约束之中'])}
               className="font-display text-5xl md:text-7xl lg:text-[5.4rem] font-medium leading-[1.04] tracking-[-0.01em]"
             />
-            <div className="flex items-center gap-8 mt-12">
-              <a href="#works" className="arrow-link hoverable hero-cta">{T('Works', '作品')} <ArrowRight className="w-4 h-4" /></a>
-              <a href="#contact" className="link-tertiary hoverable hero-cta">{T('Contact', '联系')}</a>
-            </div>
           </div>
           <div className="order-1 lg:order-2 paint-wrap rounded-sm h-[44vh] lg:h-[72vh]" data-paint>
             <PaintBlock tint="blue" seed={11} />
