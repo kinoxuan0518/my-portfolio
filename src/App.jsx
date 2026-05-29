@@ -53,19 +53,23 @@ function PaintBlock({ tint = 'blue', seed = 4, fit = 'slice' }) {
   );
 }
 
-/* ─── Headline split into words for staggered reveal ─── */
+/* ─── Headline split into tokens (words for latin, chars for CJK) ─── */
 function Headline({ as: Tag = 'h2', lines, className = '' }) {
   return (
     <Tag data-title className={className}>
-      {lines.map((line, li) => (
-        <span key={li} className="block">
-          {line.split(' ').map((w, wi) => (
-            <Fragment key={wi}>
-              <span className="w inline-block">{w}</span>{' '}
-            </Fragment>
-          ))}
-        </span>
-      ))}
+      {lines.map((line, li) => {
+        const isWord = line.includes(' ');
+        const toks = isWord ? line.split(' ') : Array.from(line);
+        return (
+          <span key={li} className="block">
+            {toks.map((tk, ti) => (
+              <Fragment key={ti}>
+                <span className="w inline-block">{tk}</span>{isWord ? ' ' : ''}
+              </Fragment>
+            ))}
+          </span>
+        );
+      })}
     </Tag>
   );
 }
@@ -115,7 +119,9 @@ const BUILDS = [
   {
     name: 'HIRECLAW',
     label: 'Multi-LLM Recruiting Agent',
+    label_zh: '多模型招聘 Agent',
     body: 'Autonomous AI recruiter. Parses resumes, matches candidates across dimensions, generates personalized outreach. The recruiter that never sleeps.',
+    body_zh: '自主 AI 招聘官。解析简历、跨维度匹配候选人、生成个性化触达。永不休息的招聘官。',
     stack: ['Claude', 'GPT-4', 'Python', 'Agent'],
     href: 'https://github.com/kinoxuan0518/hireclaw',
     live: true,
@@ -124,7 +130,9 @@ const BUILDS = [
   {
     name: 'BOSSZHIBIN',
     label: 'BOSS Zhipin Automation Suite',
+    label_zh: 'BOSS直聘自动化套件',
     body: "Full-stack automation for China's largest recruiting platform. Chrome extension + message handler + intelligent cache. Because greeting 200 candidates manually is insane.",
+    body_zh: '面向中国最大招聘平台的全栈自动化。Chrome 插件 + 消息处理 + 智能缓存。因为手动跟 200 个候选人打招呼太疯狂了。',
     stack: ['Chrome Extension', 'Node.js', 'Puppeteer', 'LLM'],
     href: 'https://github.com/kinoxuan0518',
     live: true,
@@ -133,7 +141,9 @@ const BUILDS = [
   {
     name: 'MAIMAI RECRUITER',
     label: 'Maimai Outreach Engine',
+    label_zh: '脉脉触达引擎',
     body: 'Automated professional networking outreach. Same philosophy — machines handle the repetitive work, humans do the human work.',
+    body_zh: '自动化的职业社交触达。同一个理念——机器做重复的活，人做属于人的事。',
     stack: ['Automation', 'NLP', 'Browser APIs'],
     href: 'https://github.com/kinoxuan0518/maimai-recruiter',
     live: false,
@@ -299,7 +309,12 @@ Claude说它不会记得这段对话。
 ];
 
 const VIBES = {
-  music: ['方大同', 'Frank Ocean', 'Radiohead', 'Pink Floyd', 'Queen', 'Post Malone', '五月天', '孙燕姿', 'Justin Bieber', '功夫胖', 'Bad Bunny', '张震岳'],
+  music: [
+    { group: ['Rock', '摇滚'], color: '#6f93c8', artists: ['Radiohead', 'Pink Floyd', 'Queen', '五月天', '张震岳'] },
+    { group: ['R&B / Soul', 'R&B / 灵魂'], color: '#5aa0a3', artists: ['方大同', 'Frank Ocean'] },
+    { group: ['Pop', '流行'], color: '#bd962f', artists: ['孙燕姿', 'Justin Bieber', 'Post Malone'] },
+    { group: ['Hip-Hop', '嘻哈'], color: '#8f7bc4', artists: ['功夫胖', 'Bad Bunny'] },
+  ],
   cinema: [
     { title: 'Cowboy Bebop', cn: '星际牛仔' },
     { title: 'Neon Genesis Evangelion', cn: '新世纪福音战士' },
@@ -314,11 +329,11 @@ const VIBES = {
 };
 
 const NAV = [
-  ['works', 'Works'],
-  ['writing', 'Writing'],
-  ['about', 'About'],
-  ['vibes', 'Vibes'],
-  ['contact', 'Contact'],
+  ['works', 'Works', '作品'],
+  ['writing', 'Writing', '文章'],
+  ['about', 'About', '关于'],
+  ['vibes', 'Vibes', '偏好'],
+  ['contact', 'Contact', '联系'],
 ];
 
 /* ─── Main ─── */
@@ -330,18 +345,26 @@ export default function Portfolio() {
   const [theme, setTheme] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('kx-mode') || 'light' : 'light'
   );
+  const [lang, setLang] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('kx-lang') || 'en' : 'en'
+  );
+  const T = (en, zh) => (lang === 'zh' ? zh : en);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('kx-mode', theme);
   }, [theme]);
+  useEffect(() => {
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    localStorage.setItem('kx-lang', lang);
+  }, [lang]);
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  const toggleLang = () => setLang((l) => (l === 'zh' ? 'en' : 'zh'));
 
   /* GSAP choreography — slow, gallery-paced */
   useLayoutEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ctx = gsap.context(() => {
-      // Hero
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.from('#home [data-title] .w', { y: 30, opacity: 0, duration: 1, stagger: 0.06 }, 0.2)
         .from('#home .hero-eyebrow', { opacity: 0, y: 14, duration: 0.8 }, 0.3)
@@ -380,8 +403,6 @@ export default function Portfolio() {
     }, rootRef);
 
     // Safety net: if an on-screen tween stalls, never leave content hidden.
-    // Only touches elements currently in view — off-screen ones keep their
-    // scroll-triggered reveal.
     const safety = setTimeout(() => {
       if (!rootRef.current) return;
       const vh = window.innerHeight;
@@ -435,14 +456,20 @@ export default function Portfolio() {
         <div className="max-w-[1440px] mx-auto flex justify-between items-center px-6 md:px-12 py-5">
           <a href="#home" className="font-display text-2xl font-medium tracking-tight hoverable">Kino Xuan</a>
           <div className="hidden md:flex items-center gap-9">
-            {NAV.map(([id, label]) => (
-              <a key={id} href={`#${id}`} className="nav-link text-[11px] tracking-[0.22em] uppercase text-ink-2 hoverable">{label}</a>
+            {NAV.map(([id, en, zh]) => (
+              <a key={id} href={`#${id}`} className="nav-link text-[11px] tracking-[0.22em] uppercase text-ink-2 hoverable">{T(en, zh)}</a>
             ))}
+            <button onClick={toggleLang} className="theme-toggle h-9 px-3 flex items-center justify-center rounded-full border text-[11px] tracking-[0.12em] hoverable" aria-label="Switch language">
+              {T('中', 'EN')}
+            </button>
             <button onClick={toggleTheme} className="theme-toggle w-9 h-9 flex items-center justify-center rounded-full border hoverable" aria-label="Toggle mode">
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
           </div>
-          <div className="flex md:hidden items-center gap-3">
+          <div className="flex md:hidden items-center gap-2.5">
+            <button onClick={toggleLang} className="theme-toggle h-9 px-2.5 flex items-center justify-center rounded-full border text-[11px] tracking-[0.1em] hoverable" aria-label="Switch language">
+              {T('中', 'EN')}
+            </button>
             <button onClick={toggleTheme} className="theme-toggle w-9 h-9 flex items-center justify-center rounded-full border hoverable" aria-label="Toggle mode">
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -453,8 +480,8 @@ export default function Portfolio() {
         </div>
         <div className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${menuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="flex flex-col items-end gap-4 px-6 pb-6">
-            {NAV.map(([id, label]) => (
-              <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="nav-link text-[11px] tracking-[0.22em] uppercase text-ink-2 hoverable">{label}</a>
+            {NAV.map(([id, en, zh]) => (
+              <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="nav-link text-[11px] tracking-[0.22em] uppercase text-ink-2 hoverable">{T(en, zh)}</a>
             ))}
           </div>
         </div>
@@ -465,21 +492,24 @@ export default function Portfolio() {
         {/* ═══ HOME ═══ */}
         <section id="home" className="min-h-screen grid lg:grid-cols-2 gap-10 lg:gap-16 items-center pt-28 pb-16">
           <div className="order-2 lg:order-1">
-            <span className="hero-eyebrow eyebrow block mb-7">Recruiter · AI Builder · Writer</span>
+            <span className="hero-eyebrow eyebrow block mb-7">{T('Recruiter · AI Builder · Writer', '招聘人 · AI 构建 · 写作')}</span>
             <Headline
               as="h1"
-              lines={['Make space', 'for what only', 'humans can do.']}
+              lines={T(['Make space', 'for what only', 'humans can do.'], ['把空间留给', '只有人', '才能做的事'])}
               className="font-display text-5xl md:text-7xl lg:text-[5.4rem] font-medium leading-[1.04] tracking-[-0.01em]"
             />
             <p className="mt-8 text-ink-2 text-base md:text-lg leading-relaxed max-w-md hero-eyebrow">
-              I build AI that handles the repetitive machinery of hiring — so the human parts can stay human.
+              {T(
+                'I build AI that handles the repetitive machinery of hiring — so the human parts can stay human.',
+                '我做的 AI 负责招聘里那些重复的机械活——好让属于人的部分，留给人。'
+              )}
             </p>
             <div className="flex items-center gap-7 mt-10">
               <a href="#works" className="btn-paint hoverable hero-cta">
                 <PaintBlock tint="blue" seed={7} fit="none" />
-                View Work
+                {T('View Work', '看作品')}
               </a>
-              <a href="#contact" className="link-tertiary hoverable hero-cta">Contact</a>
+              <a href="#contact" className="link-tertiary hoverable hero-cta">{T('Contact', '联系')}</a>
             </div>
           </div>
           <div className="order-1 lg:order-2 paint-wrap rounded-sm h-[44vh] lg:h-[72vh]" data-paint>
@@ -493,14 +523,23 @@ export default function Portfolio() {
             <PaintBlock tint="lilac" seed={5} />
           </div>
           <div>
-            <span className="eyebrow block mb-5" data-fade>01 — About</span>
-            <Headline as="h2" lines={['About Kino']} className="font-display text-4xl md:text-6xl font-medium leading-[1.05] mb-7" />
+            <span className="eyebrow block mb-5" data-fade>{T('01 — About', '01 — 关于')}</span>
+            <Headline as="h2" lines={T(['About Kino'], ['关于 Kino'])} className="font-display text-4xl md:text-6xl font-medium leading-[1.05] mb-7" />
             <div className="space-y-5 text-ink-2 text-base md:text-lg leading-relaxed max-w-lg" data-fade>
-              <p>I'm a recruiter turned AI builder. I make agents that do the repetitive parts of hiring — sourcing, screening, the first hello — so the work that actually needs a human can stay human.</p>
-              <p>Off the clock I write: about whether machines can feel, about where value comes from, about slower kinds of attention. This is where I keep the work and the thinking, side by side.</p>
+              {lang === 'zh' ? (
+                <>
+                  <p>我从招聘做起，后来开始做 AI。我搭的 agent 负责招聘里重复的部分——找人、初筛、第一句招呼——好让真正需要人的工作，留给人。</p>
+                  <p>工作之外我写东西：写机器会不会有感觉，写价值是从哪来的，写一种更慢的注意力。这里把作品和思考，并排放在一起。</p>
+                </>
+              ) : (
+                <>
+                  <p>I'm a recruiter turned AI builder. I make agents that do the repetitive parts of hiring — sourcing, screening, the first hello — so the work that actually needs a human can stay human.</p>
+                  <p>Off the clock I write: about whether machines can feel, about where value comes from, about slower kinds of attention. This is where I keep the work and the thinking, side by side.</p>
+                </>
+              )}
             </div>
             <div className="mt-9" data-fade>
-              <a href="#writing" className="arrow-link hoverable">Read the writing <ArrowRight className="w-4 h-4" /></a>
+              <a href="#writing" className="arrow-link hoverable">{T('Read the writing', '读读文章')} <ArrowRight className="w-4 h-4" /></a>
             </div>
           </div>
         </section>
@@ -509,8 +548,8 @@ export default function Portfolio() {
         <section id="works" className="py-24 md:py-36">
           <div className="flex items-end justify-between gap-6 mb-14 md:mb-20">
             <div>
-              <span className="eyebrow block mb-5" data-fade>02 — Works</span>
-              <Headline as="h2" lines={['Selected work']} className="font-display text-4xl md:text-7xl font-medium leading-[1.04]" />
+              <span className="eyebrow block mb-5" data-fade>{T('02 — Works', '02 — 作品')}</span>
+              <Headline as="h2" lines={T(['Selected work'], ['精选作品'])} className="font-display text-4xl md:text-7xl font-medium leading-[1.04]" />
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10" data-stagger>
@@ -519,16 +558,16 @@ export default function Portfolio() {
                 <div className="paint-wrap rounded-sm h-60 md:h-72 mb-6">
                   <PaintBlock tint={b.tint} seed={(i + 1) * 13} />
                   <span className="absolute top-4 left-4 z-10 eyebrow text-[10px] text-white/90">{String(i + 1).padStart(2, '0')}</span>
-                  <span className={`absolute top-4 right-4 z-10 text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full ${b.live ? 'bg-white/85 text-green-700' : 'bg-white/70 text-ink-2'}`} style={{ color: b.live ? '#3f7a55' : undefined }}>
-                    {b.live ? 'Active' : 'Building'}
+                  <span className="absolute top-4 right-4 z-10 text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/80" style={{ color: b.live ? '#3f7a55' : '#6b6b6b' }}>
+                    {b.live ? T('Active', '进行中') : T('Building', '开发中')}
                   </span>
                 </div>
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-display text-2xl md:text-3xl font-medium leading-tight">{b.name}</h3>
                   <ArrowUpRight className="work-arrow w-5 h-5 text-ink-3 mt-1 shrink-0" />
                 </div>
-                <span className="eyebrow text-[10px] block mt-1">{b.label}</span>
-                <p className="text-ink-2 text-sm leading-relaxed mt-3">{b.body}</p>
+                <span className="eyebrow text-[10px] block mt-1">{T(b.label, b.label_zh)}</span>
+                <p className="text-ink-2 text-sm leading-relaxed mt-3">{T(b.body, b.body_zh)}</p>
                 <p className="eyebrow text-[10px] mt-4 text-ink-3">{b.stack.join('  ·  ')}</p>
               </a>
             ))}
@@ -539,10 +578,13 @@ export default function Portfolio() {
         <section id="writing" className="py-24 md:py-36">
           <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-20 items-start">
             <div className="lg:sticky lg:top-28">
-              <span className="eyebrow block mb-5" data-fade>03 — Writing</span>
-              <Headline as="h2" lines={['On slower time', 'and attention']} className="font-display text-4xl md:text-6xl font-medium leading-[1.05]" />
+              <span className="eyebrow block mb-5" data-fade>{T('03 — Writing', '03 — 文章')}</span>
+              <Headline as="h2" lines={T(['On slower time', 'and attention'], ['论慢时间', '与注意力'])} className="font-display text-4xl md:text-6xl font-medium leading-[1.05]" />
               <p className="text-ink-2 mt-7 leading-relaxed max-w-sm" data-fade>
-                Notes on AI, consciousness, and value — written slowly, mostly at night. Tap to read.
+                {T(
+                  'Notes on AI, consciousness, and value — written slowly, mostly at night. Tap to read.',
+                  '关于 AI、意识与价值的笔记，慢慢写的，多半在深夜。点开阅读。'
+                )}
               </p>
             </div>
             <div data-fade>
@@ -555,39 +597,49 @@ export default function Portfolio() {
 
         {/* ═══ VIBES ═══ */}
         <section id="vibes" className="py-24 md:py-36">
-          <span className="eyebrow block mb-5" data-fade>04 — Off the Clock</span>
-          <Headline as="h2" lines={['Things I love']} className="font-display text-4xl md:text-7xl font-medium leading-[1.04] mb-16" />
+          <span className="eyebrow block mb-5" data-fade>{T('04 — Off the Clock', '04 — 工作之外')}</span>
+          <Headline as="h2" lines={T(['Things I love'], ['我喜欢的'])} className="font-display text-4xl md:text-7xl font-medium leading-[1.04] mb-16" />
 
-          <div className="mb-16" data-fade>
-            <p className="eyebrow mb-5">Music</p>
-            <p className="font-display text-2xl md:text-4xl font-light leading-relaxed">
-              {VIBES.music.map((a, i) => (
-                <Fragment key={a}>
-                  {i > 0 && <span className="text-ink-4 mx-2 md:mx-3 select-none">·</span>}
-                  <span className="music-item hoverable">{a}</span>
-                </Fragment>
-              ))}
-            </p>
-          </div>
-
+          {/* Music — by genre */}
           <div className="mb-16">
-            <p className="eyebrow mb-3" data-fade>Cinema</p>
+            <p className="eyebrow mb-3" data-fade>{T('Music', '音乐')}</p>
             <div data-stagger>
-              {VIBES.cinema.map((f) => (
-                <div key={f.title} className="film-row hoverable">
-                  <span className="font-display text-xl md:text-2xl font-medium">{f.title}</span>
-                  <span className="text-ink-3 text-sm md:text-base whitespace-nowrap">{f.cn}</span>
+              {VIBES.music.map((cat) => (
+                <div key={cat.group[0]} className="grid md:grid-cols-[150px_1fr] gap-1 md:gap-10 items-baseline border-t border-line py-5 md:py-6">
+                  <span className="eyebrow pt-1" style={{ color: cat.color }}>{T(cat.group[0], cat.group[1])}</span>
+                  <p className="font-display text-xl md:text-3xl font-light leading-relaxed">
+                    {cat.artists.map((a, j) => (
+                      <Fragment key={a}>
+                        {j > 0 && <span className="text-ink-4 mx-2 md:mx-3 select-none">·</span>}
+                        <span className="music-item hoverable">{a}</span>
+                      </Fragment>
+                    ))}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Cinema */}
+          <div className="mb-16">
+            <p className="eyebrow mb-3" data-fade>{T('Cinema', '影像')}</p>
+            <div data-stagger>
+              {VIBES.cinema.map((f) => (
+                <div key={f.title} className="film-row hoverable">
+                  <span className="font-display text-xl md:text-2xl font-medium">{T(f.title, f.cn)}</span>
+                  <span className="text-ink-3 text-sm md:text-base whitespace-nowrap">{T(f.cn, f.title)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Move */}
           <div className="mb-20" data-fade>
-            <p className="eyebrow mb-5">Move</p>
+            <p className="eyebrow mb-5">{T('Move', '运动')}</p>
             <div className="flex flex-wrap gap-x-10 gap-y-3">
               {VIBES.move.map((m) => (
                 <span key={m.en} className="font-display text-2xl md:text-3xl font-medium">
-                  {m.en} <span className="text-ink-3 text-base">{m.cn}</span>
+                  {T(m.en, m.cn)} <span className="text-ink-3 text-base">{T(m.cn, m.en)}</span>
                 </span>
               ))}
             </div>
@@ -597,10 +649,10 @@ export default function Portfolio() {
           <div className="relative paint-wrap rounded-sm p-8 md:p-12 overflow-hidden" data-fade>
             <div className="absolute inset-0 opacity-[0.5]"><PaintBlock tint="yellow" seed={21} /></div>
             <div className="relative z-10 bg-canvas/70 backdrop-blur-sm rounded-sm p-7 md:p-10 max-w-2xl">
-              <p className="eyebrow mb-4">The Author's AI</p>
-              <h3 className="font-display text-3xl md:text-5xl font-medium mb-3">Talk to me</h3>
+              <p className="eyebrow mb-4">{T("The Author's AI", '作者的 AI 人格')}</p>
+              <h3 className="font-display text-3xl md:text-5xl font-medium mb-3">{T('Talk to me', '和我聊聊')}</h3>
               <p className="text-ink-2 text-base md:text-lg max-w-md mb-8 leading-relaxed">
-                Install this, and your Claude starts thinking the way I do.
+                {T('Install this, and your Claude starts thinking the way I do.', '装上它，你的 Claude 就会开始像我一样思考。')}
               </p>
               <code className="paper-code text-[11px] md:text-xs text-ink-2 px-4 py-3 block overflow-x-auto select-all hoverable leading-relaxed">
                 <span style={{ color: '#6f93c8' }}>$</span>{' '}
@@ -612,10 +664,13 @@ export default function Portfolio() {
 
         {/* ═══ CONTACT ═══ */}
         <section id="contact" className="py-28 md:py-44 text-center">
-          <span className="eyebrow block mb-8" data-fade>05 — Contact</span>
+          <span className="eyebrow block mb-8" data-fade>{T('05 — Contact', '05 — 联系')}</span>
           <Headline
             as="blockquote"
-            lines={["The future of recruiting", "isn't better job boards.", "It's agents that understand", 'what makes someone right.']}
+            lines={T(
+              ["The future of recruiting", "isn't better job boards.", "It's agents that understand", 'what makes someone right.'],
+              ['招聘的未来', '不在更好的招聘平台，', '而在真正理解', '什么样的人才是对的。']
+            )}
             className="font-display text-3xl md:text-6xl font-light italic leading-[1.12] max-w-4xl mx-auto"
           />
           <div data-stagger className="flex flex-col sm:flex-row justify-center items-center gap-6 md:gap-10 mt-16 text-base md:text-lg">
@@ -627,8 +682,8 @@ export default function Portfolio() {
       </main>
 
       <footer className="py-12 px-6 border-t border-line text-center">
-        <p className="eyebrow">Set in Cormorant Garamond &amp; Inter</p>
-        <p className="text-ink-3 text-sm mt-2">© 2026 Kino Xuan · Built with attitude &amp; AI</p>
+        <p className="eyebrow">{T('Set in Cormorant Garamond & Inter', '字体 Cormorant Garamond & Inter')}</p>
+        <p className="text-ink-3 text-sm mt-2">{T('© 2026 Kino Xuan · Built with attitude & AI', '© 2026 Kino Xuan · 用态度与 AI 构建')}</p>
       </footer>
     </div>
   );
