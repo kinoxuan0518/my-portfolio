@@ -117,13 +117,13 @@ function JournalEntry({ thought, index }) {
 /* ─── Data ─── */
 const BUILDS = [
   {
-    name: 'HIRECLAW',
+    name: 'BABEL TOWER',
     label: 'Multi-LLM Recruiting Agent',
     label_zh: '多模型招聘 Agent',
     body: 'Autonomous AI recruiter. Parses resumes, matches candidates across dimensions, generates personalized outreach. The recruiter that never sleeps.',
     body_zh: '自主 AI 招聘官。解析简历、跨维度匹配候选人、生成个性化触达。永不休息的招聘官。',
-    stack: ['Claude', 'GPT-4', 'Python', 'Agent'],
-    href: 'https://github.com/kinoxuan0518/hireclaw',
+    stack: ['Claude', 'Python', 'Agent'],
+    href: 'https://github.com/kinoxuan0518',
     live: true,
     tint: 'blue',
   },
@@ -542,8 +542,8 @@ export default function Portfolio() {
                 <div className="paint-wrap rounded-sm h-60 md:h-72 mb-6">
                   <PaintBlock tint={b.tint} seed={(i + 1) * 13} />
                   <span className="absolute top-4 left-4 z-10 eyebrow text-[10px] text-white/90">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="absolute top-4 right-4 z-10 text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/80" style={{ color: b.live ? '#3f7a55' : '#6b6b6b' }}>
-                    {b.live ? T('Active', '进行中') : T('Building', '开发中')}
+                  <span className="absolute top-4 right-4 z-10 text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/80" style={{ color: '#3f7a55' }}>
+                    {T('Iterating', '迭代中')}
                   </span>
                 </div>
                 <div className="flex items-start justify-between gap-3">
