@@ -517,12 +517,12 @@ export default function Portfolio() {
             <div className="space-y-5 text-ink-2 text-base md:text-lg leading-relaxed max-w-lg" data-fade>
               {lang === 'zh' ? (
                 <>
-                  <p>我在做招聘，现在也还在做。与此同时，我对 AI 有一种强烈的好奇，对“创造新东西”这件事心存敬畏——正因如此，我格外认可它正在带来的每一步进步，也想亲手用它做点什么。</p>
+                  <p>我在黑湖科技——一家很酷的工业 AI 公司——负责 AI 招聘，寻找优秀又有趣的伙伴加入我们。与此同时，我对 AI 有一种强烈的好奇，对“创造新东西”这件事心存敬畏——正因如此，我格外认可它正在带来的每一步进步，也想亲手用它做点什么。</p>
                   <p>工作之外我写东西：写机器会不会有感觉，写价值是从哪来的，写一种更慢的注意力。这里把作品和思考，并排放在一起。</p>
                 </>
               ) : (
                 <>
-                  <p>I work in recruiting — and still do. Alongside it, I'm endlessly curious about AI, with a real reverence for the act of making new things. That's why the progress it keeps making means so much to me, and why I want to build with it myself.</p>
+                  <p>I lead AI recruiting at Black Lake Technologies — a seriously cool industrial-AI company — looking for brilliant, interesting people to join us. Alongside that, I'm endlessly curious about AI, with a real reverence for the act of making new things. That's why the progress it keeps making means so much to me, and why I want to build with it myself.</p>
                   <p>Off the clock I write: about whether machines can feel, about where value comes from, about slower kinds of attention. This is where I keep the work and the thinking, side by side.</p>
                 </>
               )}
