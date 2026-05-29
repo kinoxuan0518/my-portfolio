@@ -58,13 +58,13 @@ function Headline({ as: Tag = 'h2', lines, className = '' }) {
   return (
     <Tag data-title className={className}>
       {lines.map((line, li) => {
-        const isWord = line.includes(' ');
-        const toks = isWord ? line.split(' ') : Array.from(line);
+        const cjk = /[㐀-鿿]/.test(line);
+        const toks = cjk ? Array.from(line) : line.split(' ');
         return (
           <span key={li} className="block">
             {toks.map((tk, ti) => (
               <Fragment key={ti}>
-                <span className="w inline-block">{tk}</span>{isWord ? ' ' : ''}
+                <span className="w inline-block">{tk}</span>{cjk ? '' : ' '}
               </Fragment>
             ))}
           </span>
@@ -495,7 +495,7 @@ export default function Portfolio() {
             <span className="hero-eyebrow eyebrow block mb-7">{T('Recruiter · AI Builder · Writer', '招聘人 · AI 构建 · 写作')}</span>
             <Headline
               as="h1"
-              lines={T(['Make space', 'for what only', 'humans can do.'], ['把空间留给', '只有人', '才能做的事'])}
+              lines={T(['Innovation is', 'born of', 'constraint.'], ['创新往往', '诞生于', '约束之中'])}
               className="font-display text-5xl md:text-7xl lg:text-[5.4rem] font-medium leading-[1.04] tracking-[-0.01em]"
             />
             <p className="mt-8 text-ink-2 text-base md:text-lg leading-relaxed max-w-md hero-eyebrow">
@@ -504,11 +504,8 @@ export default function Portfolio() {
                 '我做的 AI 负责招聘里那些重复的机械活——好让属于人的部分，留给人。'
               )}
             </p>
-            <div className="flex items-center gap-7 mt-10">
-              <a href="#works" className="btn-paint hoverable hero-cta">
-                <PaintBlock tint="blue" seed={7} fit="none" />
-                {T('View Work', '看作品')}
-              </a>
+            <div className="flex items-center gap-8 mt-10">
+              <a href="#works" className="arrow-link hoverable hero-cta">{T('Works', '作品')} <ArrowRight className="w-4 h-4" /></a>
               <a href="#contact" className="link-tertiary hoverable hero-cta">{T('Contact', '联系')}</a>
             </div>
           </div>
@@ -528,12 +525,12 @@ export default function Portfolio() {
             <div className="space-y-5 text-ink-2 text-base md:text-lg leading-relaxed max-w-lg" data-fade>
               {lang === 'zh' ? (
                 <>
-                  <p>我从招聘做起，后来开始做 AI。我搭的 agent 负责招聘里重复的部分——找人、初筛、第一句招呼——好让真正需要人的工作，留给人。</p>
+                  <p>我在做招聘，现在也还在做。与此同时，我对 AI 有一种强烈的好奇，对“创造新东西”这件事心存敬畏——正因如此，我格外认可它正在带来的每一步进步，也想亲手用它做点什么。</p>
                   <p>工作之外我写东西：写机器会不会有感觉，写价值是从哪来的，写一种更慢的注意力。这里把作品和思考，并排放在一起。</p>
                 </>
               ) : (
                 <>
-                  <p>I'm a recruiter turned AI builder. I make agents that do the repetitive parts of hiring — sourcing, screening, the first hello — so the work that actually needs a human can stay human.</p>
+                  <p>I work in recruiting — and still do. Alongside it, I'm endlessly curious about AI, with a real reverence for the act of making new things. That's why the progress it keeps making means so much to me, and why I want to build with it myself.</p>
                   <p>Off the clock I write: about whether machines can feel, about where value comes from, about slower kinds of attention. This is where I keep the work and the thinking, side by side.</p>
                 </>
               )}
@@ -549,7 +546,7 @@ export default function Portfolio() {
           <div className="flex items-end justify-between gap-6 mb-14 md:mb-20">
             <div>
               <span className="eyebrow block mb-5" data-fade>{T('02 — Works', '02 — 作品')}</span>
-              <Headline as="h2" lines={T(['Selected work'], ['精选作品'])} className="font-display text-4xl md:text-7xl font-medium leading-[1.04]" />
+              <Headline as="h2" lines={T(["Things I've built"], ['我做的东西'])} className="font-display text-4xl md:text-7xl font-medium leading-[1.04]" />
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10" data-stagger>
@@ -582,8 +579,8 @@ export default function Portfolio() {
               <Headline as="h2" lines={T(['On slower time', 'and attention'], ['论慢时间', '与注意力'])} className="font-display text-4xl md:text-6xl font-medium leading-[1.05]" />
               <p className="text-ink-2 mt-7 leading-relaxed max-w-sm" data-fade>
                 {T(
-                  'Notes on AI, consciousness, and value — written slowly, mostly at night. Tap to read.',
-                  '关于 AI、意识与价值的笔记，慢慢写的，多半在深夜。点开阅读。'
+                  'Notes on AI, consciousness, and value. Tap to read.',
+                  '关于 AI、意识与价值的笔记。点开阅读。'
                 )}
               </p>
             </div>
@@ -600,24 +597,19 @@ export default function Portfolio() {
           <span className="eyebrow block mb-5" data-fade>{T('04 — Off the Clock', '04 — 工作之外')}</span>
           <Headline as="h2" lines={T(['Things I love'], ['我喜欢的'])} className="font-display text-4xl md:text-7xl font-medium leading-[1.04] mb-16" />
 
-          {/* Music — by genre */}
-          <div className="mb-16">
-            <p className="eyebrow mb-3" data-fade>{T('Music', '音乐')}</p>
-            <div data-stagger>
-              {VIBES.music.map((cat) => (
-                <div key={cat.group[0]} className="grid md:grid-cols-[150px_1fr] gap-1 md:gap-10 items-baseline border-t border-line py-5 md:py-6">
-                  <span className="eyebrow pt-1" style={{ color: cat.color }}>{T(cat.group[0], cat.group[1])}</span>
-                  <p className="font-display text-xl md:text-3xl font-light leading-relaxed">
-                    {cat.artists.map((a, j) => (
-                      <Fragment key={a}>
-                        {j > 0 && <span className="text-ink-4 mx-2 md:mx-3 select-none">·</span>}
-                        <span className="music-item hoverable">{a}</span>
-                      </Fragment>
-                    ))}
-                  </p>
-                </div>
-              ))}
-            </div>
+          {/* Music — artists colored by genre, no labels */}
+          <div className="mb-16" data-fade>
+            <p className="eyebrow mb-5">{T('Music', '音乐')}</p>
+            <p className="font-display text-2xl md:text-4xl font-light leading-relaxed">
+              {VIBES.music
+                .flatMap((cat) => cat.artists.map((a) => ({ a, color: cat.color })))
+                .map((item, i) => (
+                  <Fragment key={item.a}>
+                    {i > 0 && <span className="text-ink-4 mx-2 md:mx-3 select-none">·</span>}
+                    <span className="music-item hoverable" style={{ color: item.color }}>{item.a}</span>
+                  </Fragment>
+                ))}
+            </p>
           </div>
 
           {/* Cinema */}
@@ -668,8 +660,8 @@ export default function Portfolio() {
           <Headline
             as="blockquote"
             lines={T(
-              ["The future of recruiting", "isn't better job boards.", "It's agents that understand", 'what makes someone right.'],
-              ['招聘的未来', '不在更好的招聘平台，', '而在真正理解', '什么样的人才是对的。']
+              ['The future of recruiting', 'lies in truly understanding', 'what makes someone right.'],
+              ['招聘的未来', '在于真正理解', '什么样的人才是对的。']
             )}
             className="font-display text-3xl md:text-6xl font-light italic leading-[1.12] max-w-4xl mx-auto"
           />
