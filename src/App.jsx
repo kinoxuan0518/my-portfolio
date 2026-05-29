@@ -367,8 +367,7 @@ export default function Portfolio() {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.from('#home [data-title] .w', { y: 30, opacity: 0, duration: 1, stagger: 0.06 }, 0.2)
-        .from('#home .hero-eyebrow', { opacity: 0, y: 14, duration: 0.8 }, 0.3)
-        .from('#home .hero-cta', { opacity: 0, y: 16, duration: 0.8, stagger: 0.1 }, 0.7)
+        .from('#home .hero-cta', { opacity: 0, y: 16, duration: 0.8, stagger: 0.1 }, 0.65)
         .from('#home [data-paint]', { clipPath: 'inset(0 100% 0 0)', duration: 1.4, ease: 'power2.inOut' }, 0.1)
         .from('.vmark', { opacity: 0, duration: 1.2 }, 0.6);
 
@@ -492,19 +491,12 @@ export default function Portfolio() {
         {/* ═══ HOME ═══ */}
         <section id="home" className="min-h-screen grid lg:grid-cols-2 gap-10 lg:gap-16 items-center pt-28 pb-16">
           <div className="order-2 lg:order-1">
-            <span className="hero-eyebrow eyebrow block mb-7">{T('Recruiter · AI Builder · Writer', '招聘人 · AI 构建 · 写作')}</span>
             <Headline
               as="h1"
               lines={T(['Innovation is', 'born of', 'constraint.'], ['创新往往', '诞生于', '约束之中'])}
               className="font-display text-5xl md:text-7xl lg:text-[5.4rem] font-medium leading-[1.04] tracking-[-0.01em]"
             />
-            <p className="mt-8 text-ink-2 text-base md:text-lg leading-relaxed max-w-md hero-eyebrow">
-              {T(
-                'I build AI that handles the repetitive machinery of hiring — so the human parts can stay human.',
-                '我做的 AI 负责招聘里那些重复的机械活——好让属于人的部分，留给人。'
-              )}
-            </p>
-            <div className="flex items-center gap-8 mt-10">
+            <div className="flex items-center gap-8 mt-12">
               <a href="#works" className="arrow-link hoverable hero-cta">{T('Works', '作品')} <ArrowRight className="w-4 h-4" /></a>
               <a href="#contact" className="link-tertiary hoverable hero-cta">{T('Contact', '联系')}</a>
             </div>
