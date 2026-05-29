@@ -636,7 +636,7 @@ export default function Portfolio() {
               <p className="eyebrow mb-4">{T("The Author's AI", '作者的 AI 人格')}</p>
               <h3 className="font-display text-3xl md:text-5xl font-medium mb-3">{T('Talk to me', '和我聊聊')}</h3>
               <p className="text-ink-2 text-base md:text-lg max-w-md mb-8 leading-relaxed">
-                {T('Install this, and your Claude starts thinking the way I do.', '装上它，你的 Claude 就会开始像我一样思考。')}
+                {T("Install this and you can talk with me through Claude — it isn't the real me, though, so you're always welcome to come say hello.", '装上它，你可以用 Claude 和我对话，不过这不是真人，欢迎和真实的我聊聊。')}
               </p>
               <code className="paper-code text-[11px] md:text-xs text-ink-2 px-4 py-3 block overflow-x-auto select-all hoverable leading-relaxed">
                 <span style={{ color: '#6f93c8' }}>$</span>{' '}
